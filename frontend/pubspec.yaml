@@ -35,6 +35,7 @@ dependencies:
 
   #make request to api
   retrofit: ^4.0.0
+  dio: ^5.4.0
 
   # Firebase
   firebase_core: ^4.2.1
