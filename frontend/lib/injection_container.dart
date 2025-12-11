@@ -11,6 +11,23 @@ import 'features/daily_news/domain/usecases/remove_article.dart';
 import 'features/daily_news/domain/usecases/save_article.dart';
 import 'features/daily_news/presentation/bloc/article/local/local_article_bloc.dart';
 
+// Auth feature imports
+import 'package:news_app_clean_architecture/features/auth/data/data_sources/firebase_auth_service.dart';
+import 'package:news_app_clean_architecture/features/auth/data/repository/auth_repository_impl.dart';
+import 'package:news_app_clean_architecture/features/auth/domain/repository/auth_repository.dart';
+import 'package:news_app_clean_architecture/features/auth/domain/usecases/get_current_user.dart';
+import 'package:news_app_clean_architecture/features/auth/domain/usecases/sign_in.dart';
+import 'package:news_app_clean_architecture/features/auth/domain/usecases/sign_out.dart';
+import 'package:news_app_clean_architecture/features/auth/domain/usecases/sign_up.dart';
+import 'package:news_app_clean_architecture/features/auth/presentation/bloc/auth_cubit.dart';
+
+// Firestore article feature imports
+import 'package:news_app_clean_architecture/features/daily_news/data/data_sources/firestore_article_service.dart';
+import 'package:news_app_clean_architecture/features/daily_news/data/repository/firestore_article_repository_impl.dart';
+import 'package:news_app_clean_architecture/features/daily_news/domain/repository/firestore_article_repository.dart';
+import 'package:news_app_clean_architecture/features/daily_news/domain/usecases/create_article.dart';
+import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article/create/create_article_cubit.dart';
+
 final sl = GetIt.instance;
 
 Future<void> initializeDependencies() async {
@@ -53,6 +70,69 @@ Future<void> initializeDependencies() async {
 
   sl.registerFactory<LocalArticleBloc>(
     ()=> LocalArticleBloc(sl(),sl(),sl())
+  );
+
+  // ============================================
+  // Auth Feature
+  // ============================================
+
+  // Auth Data Sources
+  sl.registerSingleton<FirebaseAuthService>(FirebaseAuthService());
+
+  // Auth Repository
+  sl.registerSingleton<AuthRepository>(
+    AuthRepositoryImpl(sl<FirebaseAuthService>())
+  );
+
+  // Auth UseCases
+  sl.registerSingleton<GetCurrentUserUseCase>(
+    GetCurrentUserUseCase(sl<AuthRepository>())
+  );
+
+  sl.registerSingleton<SignInUseCase>(
+    SignInUseCase(sl<AuthRepository>())
+  );
+
+  sl.registerSingleton<SignUpUseCase>(
+    SignUpUseCase(sl<AuthRepository>())
+  );
+
+  sl.registerSingleton<SignOutUseCase>(
+    SignOutUseCase(sl<AuthRepository>())
+  );
+
+  // Auth Cubit
+  sl.registerFactory<AuthCubit>(
+    () => AuthCubit(
+      getCurrentUserUseCase: sl<GetCurrentUserUseCase>(),
+      signInUseCase: sl<SignInUseCase>(),
+      signUpUseCase: sl<SignUpUseCase>(),
+      signOutUseCase: sl<SignOutUseCase>(),
+    )
+  );
+
+  // ============================================
+  // Firestore Article Feature
+  // ============================================
+
+  // Firestore Data Sources
+  sl.registerSingleton<FirestoreArticleService>(FirestoreArticleService());
+
+  // Firestore Repository
+  sl.registerSingleton<FirestoreArticleRepository>(
+    FirestoreArticleRepositoryImpl(sl<FirestoreArticleService>())
+  );
+
+  // Firestore UseCases
+  sl.registerSingleton<CreateArticleUseCase>(
+    CreateArticleUseCase(sl<FirestoreArticleRepository>())
+  );
+
+  // Create Article Cubit
+  sl.registerFactory<CreateArticleCubit>(
+    () => CreateArticleCubit(
+      createArticleUseCase: sl<CreateArticleUseCase>(),
+    )
   );
 
 

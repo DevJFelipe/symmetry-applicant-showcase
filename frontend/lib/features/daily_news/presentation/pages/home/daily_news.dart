@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:news_app_clean_architecture/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article/remote/remote_article_bloc.dart';
 import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article/remote/remote_article_state.dart';
 
@@ -28,6 +29,26 @@ class DailyNews extends StatelessWidget {
             padding: EdgeInsets.symmetric(horizontal: 14),
             child: Icon(Icons.bookmark, color: Colors.black),
           ),
+        ),
+        PopupMenuButton<String>(
+          icon: const Icon(Icons.more_vert, color: Colors.black),
+          onSelected: (value) {
+            if (value == 'logout') {
+              _onLogout(context);
+            }
+          },
+          itemBuilder: (context) => [
+            const PopupMenuItem(
+              value: 'logout',
+              child: Row(
+                children: [
+                  Icon(Icons.logout, color: Colors.black54),
+                  SizedBox(width: 8),
+                  Text('Sign Out'),
+                ],
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -70,9 +91,7 @@ class DailyNews extends StatelessWidget {
         children: articleWidgets,
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // TODO: REPLACE ROUTE WITH YOUR "ADD ARTICLE" PAGE
-        },
+        onPressed: () => _onCreateArticle(context),
         child: const Icon(Icons.add),
       ),
     );
@@ -84,5 +103,13 @@ class DailyNews extends StatelessWidget {
 
   void _onShowSavedArticlesViewTapped(BuildContext context) {
     Navigator.pushNamed(context, '/SavedArticles');
+  }
+
+  void _onCreateArticle(BuildContext context) {
+    Navigator.pushNamed(context, '/create-article');
+  }
+
+  void _onLogout(BuildContext context) {
+    context.read<AuthCubit>().signOut();
   }
 }
