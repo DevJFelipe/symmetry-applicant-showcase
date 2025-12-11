@@ -14,9 +14,6 @@ dependencies:
 
   cupertino_icons: ^1.0.2
 
-  # Icons
-  ionicons: ^0.2.2
-
   # State management
   flutter_bloc: ^9.1.1
 
@@ -42,9 +39,6 @@ dependencies:
   cloud_firestore: ^5.6.7
   firebase_storage: ^12.4.5
   firebase_auth: ^5.7.0
-
-  # Hooks
-  flutter_hooks: ^0.21.2
 
   # Cached images
   cached_network_image: ^3.2.0
@@ -80,6 +74,18 @@ dependencies:
   
   # UUID for unique identifiers
   uuid: ^4.5.1
+
+  # Cryptography for hashing
+  crypto: ^3.0.5
+
+  # URL launcher
+  url_launcher: ^6.2.5
+
+  # Share functionality
+  share_plus: ^7.2.2
+
+  # Local preferences storage
+  shared_preferences: ^2.3.3
 
 dev_dependencies:
   flutter_test:

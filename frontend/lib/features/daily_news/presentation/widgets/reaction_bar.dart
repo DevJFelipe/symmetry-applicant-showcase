@@ -44,7 +44,21 @@ class ReactionBar extends StatefulWidget {
 }
 
 class _ReactionBarState extends State<ReactionBar> {
-  Set<ArticleReaction> _animatingReactions = {};
+  final Set<ArticleReaction> _animatingReactions = {};
+
+  /// Finds the user's current active reaction (if any).
+  /// Each user can only have ONE active reaction.
+  ArticleReaction? _getUserActiveReaction() {
+    if (widget.currentUserId == null) return null;
+    
+    for (final reaction in ArticleReaction.values) {
+      final users = widget.userReactions[reaction.name] ?? [];
+      if (users.contains(widget.currentUserId)) {
+        return reaction;
+      }
+    }
+    return null;
+  }
 
   bool _hasUserReacted(ArticleReaction reaction) {
     if (widget.currentUserId == null) return false;
@@ -67,7 +81,7 @@ class _ReactionBarState extends State<ReactionBar> {
     // Haptic feedback
     HapticService.reaction();
     
-    // Callback
+    // Callback - the cubit handles single-reaction logic
     widget.onReactionToggled?.call(reaction, !isActive);
     
     // Remove animation state after delay

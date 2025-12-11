@@ -33,6 +33,24 @@ service cloud.firestore {
     }
     
     // ============================================
+    // EXTERNAL ARTICLE REACTIONS COLLECTION
+    // ============================================
+    // Used for storing reactions on external API articles
+    // (articles that don't exist in our 'articles' collection)
+    match /article_reactions/{articleId} {
+      
+      // Anyone can read reactions
+      allow read: if true;
+      
+      // Any authenticated user can create/update reactions
+      allow create, update: if isAuthenticated()
+                            && isValidReactionSchema();
+      
+      // No deletion allowed (reactions are managed via updates)
+      allow delete: if false;
+    }
+
+    // ============================================
     // HELPER FUNCTIONS
     // ============================================
     
@@ -52,6 +70,15 @@ service cloud.firestore {
       let allowedFields = ['reactions', 'userReactions'].toSet();
       let changedFields = request.resource.data.diff(resource.data).affectedKeys();
       return changedFields.hasOnly(allowedFields);
+    }
+    
+    // Validate reaction document schema
+    function isValidReactionSchema() {
+      let data = request.resource.data;
+      return data.articleUrl is string
+        && data.articleUrl.size() > 0
+        && data.reactions is map
+        && data.userReactions is map;
     }
     
     // Validate article schema

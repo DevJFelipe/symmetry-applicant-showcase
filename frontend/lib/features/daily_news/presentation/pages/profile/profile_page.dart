@@ -391,7 +391,7 @@ class ProfilePage extends StatelessWidget {
 
   void _onSettingsTapped(BuildContext context) {
     HapticService.lightImpact();
-    // TODO: Navigate to settings
+    Navigator.pushNamed(context, '/settings');
   }
 
   void _showSignOutConfirmation(BuildContext context) {

@@ -11,7 +11,7 @@ import '../../features/daily_news/presentation/bloc/article/edit/edit_article_cu
 import '../../features/daily_news/presentation/bloc/article_detail/article_detail_cubit.dart';
 import '../../features/daily_news/presentation/bloc/search/search_cubit.dart';
 import '../../features/daily_news/presentation/bloc/my_articles/my_articles_cubit.dart';
-import '../../features/daily_news/presentation/pages/article_detail/premium_article_detail.dart';
+import '../../features/daily_news/presentation/pages/article_detail/article_detail.dart';
 import '../../features/daily_news/presentation/pages/create_article/create_article_page.dart';
 import '../../features/daily_news/presentation/pages/edit_article/edit_article_page.dart';
 import '../../features/daily_news/presentation/pages/home/premium_daily_news.dart';
@@ -19,6 +19,7 @@ import '../../features/daily_news/presentation/pages/my_articles/my_articles_pag
 import '../../features/daily_news/presentation/pages/profile/profile_page.dart';
 import '../../features/daily_news/presentation/pages/saved_article/saved_article.dart';
 import '../../features/daily_news/presentation/pages/search/search_page.dart';
+import '../../features/daily_news/presentation/pages/settings/settings_page.dart';
 
 
 class AppRoutes {
@@ -90,6 +91,9 @@ class AppRoutes {
             child: const EditArticlePage(),
           ),
         );
+
+      case '/settings':
+        return _materialRoute(const SettingsPage());
         
       default:
         return _materialRoute(const PremiumDailyNews());

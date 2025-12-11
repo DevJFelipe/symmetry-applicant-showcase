@@ -1,9 +1,12 @@
 import 'package:get_it/get_it.dart';
 import 'package:dio/dio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:news_app_clean_architecture/core/services/preferences_service.dart';
 import 'package:news_app_clean_architecture/features/daily_news/data/data_sources/remote/news_api_service.dart';
 import 'package:news_app_clean_architecture/features/daily_news/data/repository/article_repository_impl.dart';
 import 'package:news_app_clean_architecture/features/daily_news/domain/repository/article_repository.dart';
 import 'package:news_app_clean_architecture/features/daily_news/domain/usecases/get_article.dart';
+import 'package:news_app_clean_architecture/features/daily_news/domain/usecases/get_external_reactions.dart';
 import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article/remote/remote_article_bloc.dart';
 import 'features/daily_news/data/data_sources/local/app_database.dart';
 import 'features/daily_news/domain/usecases/get_saved_article.dart';
@@ -23,6 +26,7 @@ import 'package:news_app_clean_architecture/features/auth/presentation/bloc/auth
 
 // Firestore article feature imports
 import 'package:news_app_clean_architecture/features/daily_news/data/data_sources/firestore_article_service.dart';
+import 'package:news_app_clean_architecture/features/daily_news/data/data_sources/reaction_service.dart';
 import 'package:news_app_clean_architecture/features/daily_news/data/repository/firestore_article_repository_impl.dart';
 import 'package:news_app_clean_architecture/features/daily_news/domain/repository/firestore_article_repository.dart';
 import 'package:news_app_clean_architecture/features/daily_news/domain/usecases/create_article.dart';
@@ -40,6 +44,14 @@ import 'package:news_app_clean_architecture/features/daily_news/presentation/blo
 final sl = GetIt.instance;
 
 Future<void> initializeDependencies() async {
+
+  // ============================================
+  // Core Services
+  // ============================================
+  
+  // Preferences Service (must be initialized first - async)
+  final sharedPreferences = await SharedPreferences.getInstance();
+  sl.registerSingleton<PreferencesService>(PreferencesService(sharedPreferences));
 
   final database = await $FloorAppDatabase.databaseBuilder('app_database.db').build();
   sl.registerSingleton<AppDatabase>(database);
@@ -73,8 +85,13 @@ Future<void> initializeDependencies() async {
 
 
   //Blocs
+  // Note: RemoteArticlesBloc depends on ReactionService via GetExternalReactionsUseCase
+  // which is registered later, so we use sl.call() to defer resolution
   sl.registerFactory<RemoteArticlesBloc>(
-    ()=> RemoteArticlesBloc(sl())
+    ()=> RemoteArticlesBloc(
+      sl<GetArticleUseCase>(),
+      sl<GetExternalReactionsUseCase>(),
+    )
   );
 
   sl.registerFactory<LocalArticleBloc>(
@@ -127,6 +144,9 @@ Future<void> initializeDependencies() async {
   // Firestore Data Sources
   sl.registerSingleton<FirestoreArticleService>(FirestoreArticleService());
 
+  // Reaction Service (for both Firestore and external articles)
+  sl.registerSingleton<ReactionService>(ReactionService());
+
   // Firestore Repository
   sl.registerSingleton<FirestoreArticleRepository>(
     FirestoreArticleRepositoryImpl(sl<FirestoreArticleService>())
@@ -156,6 +176,10 @@ Future<void> initializeDependencies() async {
   sl.registerSingleton<UpdateArticleUseCase>(
     UpdateArticleUseCase(sl<FirestoreArticleRepository>())
   );
+  
+  sl.registerSingleton<GetExternalReactionsUseCase>(
+    GetExternalReactionsUseCase(sl<ReactionService>())
+  );
 
   // Create Article Cubit
   sl.registerFactory<CreateArticleCubit>(
@@ -182,7 +206,7 @@ Future<void> initializeDependencies() async {
   // Article Detail Cubit (for reactions)
   sl.registerFactory<ArticleDetailCubit>(
     () => ArticleDetailCubit(
-      toggleReactionUseCase: sl<ToggleReactionUseCase>(),
+      reactionService: sl<ReactionService>(),
     )
   );
 
