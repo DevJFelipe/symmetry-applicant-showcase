@@ -45,7 +45,21 @@ class ArticleModel extends ArticleEntity {
       url: entity.url,
       urlToImage: entity.urlToImage,
       publishedAt: entity.publishedAt,
-      content: entity.content
+      content: entity.content,
+    );
+  }
+
+  /// Convierte el modelo a entidad de dominio.
+  ArticleEntity toEntity() {
+    return ArticleEntity(
+      id: id,
+      author: author,
+      title: title,
+      description: description,
+      url: url,
+      urlToImage: urlToImage,
+      publishedAt: publishedAt,
+      content: content,
     );
   }
 }
