@@ -1,7 +1,185 @@
 rules_version = '2';
 
+/**
+ * Firestore Security Rules
+ * News Application - Applicant Showcase
+ * 
+ * This file defines access control rules for the Cloud Firestore database.
+ * Rules are evaluated top-down and the first matching rule determines access.
+ * 
+ * Documentation: https://firebase.google.com/docs/firestore/security/get-started
+ * 
+ * @version 1.0
+ * @date 2025-12-10
+ */
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    // TODO: WRITE ANY NECESSARY FIRESTORE RULES HERE
+
+    // =========================================================================
+    // ARTICLES COLLECTION
+    // =========================================================================
+    // 
+    // Path: /articles/{articleId}
+    // 
+    // Contains news articles created by authenticated journalists.
+    // Public read access, authenticated write with ownership validation.
+    //
+    // =========================================================================
+
+    match /articles/{articleId} {
+
+      // -----------------------------------------------------------------------
+      // READ OPERATIONS
+      // -----------------------------------------------------------------------
+      // Public access: any user (authenticated or anonymous) can read articles.
+      // This enables the public news feed functionality.
+
+      allow read: if true;
+
+      // -----------------------------------------------------------------------
+      // CREATE OPERATION
+      // -----------------------------------------------------------------------
+      // Requirements:
+      //   1. User must be authenticated
+      //   2. Document must pass schema validation
+      //   3. userId field must match the authenticated user's UID
+      //
+      // This ensures users can only create articles attributed to themselves.
+
+      allow create: if isAuthenticated()
+                    && isValidArticleSchema()
+                    && request.resource.data.userId == request.auth.uid;
+
+      // -----------------------------------------------------------------------
+      // UPDATE OPERATION
+      // -----------------------------------------------------------------------
+      // Requirements:
+      //   1. User must be authenticated
+      //   2. User must be the owner of the existing document
+      //   3. Document must pass schema validation
+      //   4. userId field cannot be changed (ownership is immutable)
+      //
+      // This prevents users from modifying others' articles or transferring
+      // ownership to another user.
+
+      allow update: if isAuthenticated()
+                    && isOwner()
+                    && isValidArticleSchema()
+                    && request.resource.data.userId == resource.data.userId;
+
+      // -----------------------------------------------------------------------
+      // DELETE OPERATION
+      // -----------------------------------------------------------------------
+      // Requirements:
+      //   1. User must be authenticated
+      //   2. User must be the owner of the document
+      //
+      // Only the original author can delete their articles.
+
+      allow delete: if isAuthenticated() && isOwner();
+    }
+
+    // =========================================================================
+    // HELPER FUNCTIONS
+    // =========================================================================
+
+    /**
+     * Checks if the request is from an authenticated user.
+     * 
+     * @return {boolean} True if request.auth is not null
+     */
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    /**
+     * Checks if the authenticated user owns the existing document.
+     * Compares the authenticated user's UID with the document's userId field.
+     * 
+     * @return {boolean} True if auth.uid matches resource.data.userId
+     */
+    function isOwner() {
+      return request.auth.uid == resource.data.userId;
+    }
+
+    /**
+     * Validates the article document schema.
+     * 
+     * Required fields:
+     *   - title: string, 1-200 characters
+     *   - description: string, 1-500 characters
+     *   - content: string, minimum 1 character
+     *   - author: string, 1-100 characters
+     *   - userId: string, non-empty
+     *   - urlToImage: string, non-empty
+     *   - publishedAt: Firestore Timestamp
+     *   - createdAt: Firestore Timestamp
+     * 
+     * Optional fields:
+     *   - url: string (if present)
+     * 
+     * @return {boolean} True if document passes all validations
+     */
+    function isValidArticleSchema() {
+      let data = request.resource.data;
+      let requiredFields = [
+        'title',
+        'description',
+        'content',
+        'author',
+        'userId',
+        'urlToImage',
+        'publishedAt',
+        'createdAt'
+      ];
+
+      // Validate required fields exist
+      let hasRequiredFields = data.keys().hasAll(requiredFields);
+
+      // Validate title field
+      let isValidTitle = data.title is string
+                         && data.title.size() > 0
+                         && data.title.size() <= 200;
+
+      // Validate description field
+      let isValidDescription = data.description is string
+                               && data.description.size() > 0
+                               && data.description.size() <= 500;
+
+      // Validate content field
+      let isValidContent = data.content is string
+                           && data.content.size() > 0;
+
+      // Validate author field
+      let isValidAuthor = data.author is string
+                          && data.author.size() > 0
+                          && data.author.size() <= 100;
+
+      // Validate userId field
+      let isValidUserId = data.userId is string
+                          && data.userId.size() > 0;
+
+      // Validate urlToImage field
+      let isValidUrlToImage = data.urlToImage is string
+                              && data.urlToImage.size() > 0;
+
+      // Validate timestamp fields
+      let isValidTimestamps = data.publishedAt is timestamp
+                              && data.createdAt is timestamp;
+
+      // Validate optional url field (if present, must be string)
+      let isValidOptionalUrl = !('url' in data.keys()) || data.url is string;
+
+      return hasRequiredFields
+             && isValidTitle
+             && isValidDescription
+             && isValidContent
+             && isValidAuthor
+             && isValidUserId
+             && isValidUrlToImage
+             && isValidTimestamps
+             && isValidOptionalUrl;
+    }
   }
 }
