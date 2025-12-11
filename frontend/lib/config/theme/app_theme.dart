@@ -9,13 +9,13 @@ import 'app_spacing.dart';
 /// Editorial design with immersive dark mode
 class AppTheme {
   AppTheme._();
-  
+
   /// Dark theme - Primary theme for the app
   static ThemeData get darkTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      
+
       // ========================================
       // COLOR SCHEME
       // ========================================
@@ -46,18 +46,18 @@ class AppTheme {
         onInverseSurface: AppColors.background,
         inversePrimary: AppColors.primaryDark,
       ),
-      
+
       // ========================================
       // SCAFFOLD
       // ========================================
       scaffoldBackgroundColor: AppColors.background,
-      
+
       // ========================================
       // TYPOGRAPHY
       // ========================================
       textTheme: AppTypography.textTheme,
       fontFamily: AppTypography.sansFamily,
-      
+
       // ========================================
       // APP BAR
       // ========================================
@@ -83,7 +83,7 @@ class AppTheme {
           systemNavigationBarIconBrightness: Brightness.light,
         ),
       ),
-      
+
       // ========================================
       // CARD
       // ========================================
@@ -100,7 +100,7 @@ class AppTheme {
         ),
         margin: EdgeInsets.zero,
       ),
-      
+
       // ========================================
       // ELEVATED BUTTON
       // ========================================
@@ -122,7 +122,7 @@ class AppTheme {
           textStyle: AppTypography.button,
         ),
       ),
-      
+
       // ========================================
       // TEXT BUTTON
       // ========================================
@@ -139,7 +139,7 @@ class AppTheme {
           textStyle: AppTypography.labelLarge,
         ),
       ),
-      
+
       // ========================================
       // OUTLINED BUTTON
       // ========================================
@@ -157,19 +157,19 @@ class AppTheme {
           textStyle: AppTypography.button.copyWith(color: AppColors.primary),
         ),
       ),
-      
+
       // ========================================
       // ICON BUTTON
       // ========================================
       iconButtonTheme: IconButtonThemeData(
         style: IconButton.styleFrom(
           foregroundColor: AppColors.textSecondary,
-          hoverColor: AppColors.primary.withOpacity(0.1),
-          focusColor: AppColors.primary.withOpacity(0.1),
-          highlightColor: AppColors.primary.withOpacity(0.15),
+          hoverColor: AppColors.primary.withValues(alpha: 0.1),
+          focusColor: AppColors.primary.withValues(alpha: 0.1),
+          highlightColor: AppColors.primary.withValues(alpha: 0.15),
         ),
       ),
-      
+
       // ========================================
       // FLOATING ACTION BUTTON
       // ========================================
@@ -184,7 +184,7 @@ class AppTheme {
           borderRadius: AppRadius.fab,
         ),
       ),
-      
+
       // ========================================
       // INPUT DECORATION
       // ========================================
@@ -230,7 +230,7 @@ class AppTheme {
         prefixIconColor: AppColors.textTertiary,
         suffixIconColor: AppColors.textTertiary,
       ),
-      
+
       // ========================================
       // BOTTOM NAVIGATION BAR
       // ========================================
@@ -242,7 +242,7 @@ class AppTheme {
         elevation: 0,
         showUnselectedLabels: true,
       ),
-      
+
       // ========================================
       // NAVIGATION BAR (Material 3)
       // ========================================
@@ -256,7 +256,8 @@ class AppTheme {
           if (states.contains(WidgetState.selected)) {
             return AppTypography.labelSmall.copyWith(color: AppColors.primary);
           }
-          return AppTypography.labelSmall.copyWith(color: AppColors.textTertiary);
+          return AppTypography.labelSmall
+              .copyWith(color: AppColors.textTertiary);
         }),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
@@ -265,7 +266,7 @@ class AppTheme {
           return const IconThemeData(color: AppColors.textTertiary, size: 24);
         }),
       ),
-      
+
       // ========================================
       // BOTTOM SHEET
       // ========================================
@@ -280,7 +281,7 @@ class AppTheme {
         dragHandleColor: AppColors.textTertiary,
         dragHandleSize: Size(40, 4),
       ),
-      
+
       // ========================================
       // DIALOG
       // ========================================
@@ -294,7 +295,7 @@ class AppTheme {
         titleTextStyle: AppTypography.titleLarge,
         contentTextStyle: AppTypography.bodyMedium,
       ),
-      
+
       // ========================================
       // SNACKBAR
       // ========================================
@@ -307,7 +308,7 @@ class AppTheme {
         behavior: SnackBarBehavior.floating,
         elevation: 4,
       ),
-      
+
       // ========================================
       // CHIP
       // ========================================
@@ -325,7 +326,7 @@ class AppTheme {
           vertical: AppSpacing.xs,
         ),
       ),
-      
+
       // ========================================
       // DIVIDER
       // ========================================
@@ -334,7 +335,7 @@ class AppTheme {
         thickness: 1,
         space: 1,
       ),
-      
+
       // ========================================
       // PROGRESS INDICATOR
       // ========================================
@@ -343,7 +344,7 @@ class AppTheme {
         circularTrackColor: AppColors.surfaceVariant,
         linearTrackColor: AppColors.surfaceVariant,
       ),
-      
+
       // ========================================
       // REFRESH INDICATOR
       // ========================================
@@ -351,7 +352,7 @@ class AppTheme {
       //   backgroundColor: AppColors.surface,
       //   color: AppColors.primary,
       // ),
-      
+
       // ========================================
       // LIST TILE
       // ========================================
@@ -365,7 +366,7 @@ class AppTheme {
           vertical: AppSpacing.sm,
         ),
       ),
-      
+
       // ========================================
       // SWITCH
       // ========================================
@@ -383,7 +384,7 @@ class AppTheme {
           return AppColors.surfaceVariant;
         }),
       ),
-      
+
       // ========================================
       // TAB BAR
       // ========================================
@@ -396,7 +397,7 @@ class AppTheme {
         indicatorSize: TabBarIndicatorSize.label,
         dividerColor: Colors.transparent,
       ),
-      
+
       // ========================================
       // TOOLTIP
       // ========================================
@@ -407,7 +408,7 @@ class AppTheme {
         ),
         textStyle: AppTypography.labelSmall,
       ),
-      
+
       // ========================================
       // SCROLLBAR
       // ========================================
@@ -417,14 +418,14 @@ class AppTheme {
         radius: const Radius.circular(AppRadius.full),
         thickness: WidgetStateProperty.all(4),
       ),
-      
+
       // ========================================
       // MISC
       // ========================================
-      splashColor: AppColors.primary.withOpacity(0.1),
-      highlightColor: AppColors.primary.withOpacity(0.05),
-      hoverColor: AppColors.primary.withOpacity(0.04),
-      focusColor: AppColors.primary.withOpacity(0.12),
+      splashColor: AppColors.primary.withValues(alpha: 0.1),
+      highlightColor: AppColors.primary.withValues(alpha: 0.05),
+      hoverColor: AppColors.primary.withValues(alpha: 0.04),
+      focusColor: AppColors.primary.withValues(alpha: 0.12),
     );
   }
 }

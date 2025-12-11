@@ -5,41 +5,41 @@ import 'package:vibration/vibration.dart';
 /// Provides consistent tactile feedback for user interactions.
 abstract final class HapticService {
   static bool _hasVibrator = true;
-  
+
   /// Initialize the haptic service
   /// Call this during app initialization
   static Future<void> initialize() async {
-    _hasVibrator = await Vibration.hasVibrator() ?? false;
+    _hasVibrator = await Vibration.hasVibrator();
   }
-  
+
   /// Light impact - for subtle interactions (taps, selections)
   static Future<void> lightImpact() async {
     if (_hasVibrator) {
       await HapticFeedback.lightImpact();
     }
   }
-  
+
   /// Medium impact - for standard interactions (buttons, toggles)
   static Future<void> mediumImpact() async {
     if (_hasVibrator) {
       await HapticFeedback.mediumImpact();
     }
   }
-  
+
   /// Heavy impact - for significant actions (delete, submit)
   static Future<void> heavyImpact() async {
     if (_hasVibrator) {
       await HapticFeedback.heavyImpact();
     }
   }
-  
+
   /// Selection click - for discrete selections
   static Future<void> selectionClick() async {
     if (_hasVibrator) {
       await HapticFeedback.selectionClick();
     }
   }
-  
+
   /// Success pattern - for successful operations
   static Future<void> success() async {
     if (_hasVibrator) {
@@ -48,7 +48,7 @@ abstract final class HapticService {
       await HapticFeedback.lightImpact();
     }
   }
-  
+
   /// Error pattern - for error feedback
   static Future<void> error() async {
     if (_hasVibrator) {
@@ -57,7 +57,7 @@ abstract final class HapticService {
       await HapticFeedback.heavyImpact();
     }
   }
-  
+
   /// Warning pattern - for warnings/confirmations
   static Future<void> warning() async {
     if (_hasVibrator) {
@@ -66,12 +66,12 @@ abstract final class HapticService {
       await HapticFeedback.mediumImpact();
     }
   }
-  
+
   /// Custom vibration pattern
   /// [durations] - alternating wait and vibrate times in milliseconds
   static Future<void> custom(List<int> pattern) async {
     if (_hasVibrator) {
-      final hasCustom = await Vibration.hasCustomVibrationsSupport() ?? false;
+      final hasCustom = await Vibration.hasCustomVibrationsSupport();
       if (hasCustom) {
         await Vibration.vibrate(pattern: pattern);
       } else {
@@ -79,7 +79,7 @@ abstract final class HapticService {
       }
     }
   }
-  
+
   /// Reaction feedback - celebratory pattern for reactions
   static Future<void> reaction() async {
     if (_hasVibrator) {
@@ -90,7 +90,7 @@ abstract final class HapticService {
       await HapticFeedback.mediumImpact();
     }
   }
-  
+
   /// Long press feedback
   static Future<void> longPress() async {
     if (_hasVibrator) {

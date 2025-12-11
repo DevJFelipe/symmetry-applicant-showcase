@@ -51,10 +51,8 @@ class FirestoreArticleService {
 
   /// Fetches a single article by its document ID.
   Future<FirestoreArticleModel?> getArticleById(String articleId) async {
-    final doc = await _firestore
-        .collection(_articlesCollection)
-        .doc(articleId)
-        .get();
+    final doc =
+        await _firestore.collection(_articlesCollection).doc(articleId).get();
 
     if (!doc.exists) return null;
     return FirestoreArticleModel.fromFirestore(doc);
@@ -92,10 +90,7 @@ class FirestoreArticleService {
   /// Also deletes the associated thumbnail from Cloud Storage if it exists.
   Future<void> deleteArticle(String articleId, String? imageUrl) async {
     // Delete the article document
-    await _firestore
-        .collection(_articlesCollection)
-        .doc(articleId)
-        .delete();
+    await _firestore.collection(_articlesCollection).doc(articleId).delete();
 
     // Delete the associated image if it exists in our storage
     if (imageUrl != null && imageUrl.contains('firebase')) {
@@ -159,14 +154,14 @@ class FirestoreArticleService {
     String? urlToImage,
   }) async {
     final Map<String, dynamic> updates = {};
-    
+
     if (title != null) updates['title'] = title;
     if (description != null) updates['description'] = description;
     if (content != null) updates['content'] = content;
     if (urlToImage != null) updates['urlToImage'] = urlToImage;
-    
+
     if (updates.isEmpty) return;
-    
+
     await _firestore
         .collection(_articlesCollection)
         .doc(articleId)
@@ -183,41 +178,43 @@ class FirestoreArticleService {
     required String userId,
     required String reactionType,
   }) async {
-    return _firestore.runTransaction<FirestoreArticleModel>((transaction) async {
+    return _firestore
+        .runTransaction<FirestoreArticleModel>((transaction) async {
       final docRef = _firestore.collection(_articlesCollection).doc(articleId);
       final doc = await transaction.get(docRef);
-      
+
       if (!doc.exists) {
         throw FirestoreException(
           code: 'not-found',
           message: 'Article not found',
         );
       }
-      
+
       final data = doc.data()!;
-      
+
       // Get current reactions map or create empty one
       final Map<String, int> reactions = Map<String, int>.from(
         data['reactions'] as Map<String, dynamic>? ?? {},
       );
-      
+
       // Get current userReactions map or create empty one
-      final Map<String, List<dynamic>> userReactions = Map<String, List<dynamic>>.from(
+      final Map<String, List<dynamic>> userReactions =
+          Map<String, List<dynamic>>.from(
         data['userReactions'] as Map<String, dynamic>? ?? {},
       );
-      
+
       // Get the list of users who have this reaction
       final List<String> usersWithReaction = List<String>.from(
         userReactions[reactionType] ?? [],
       );
-      
+
       final bool hasReacted = usersWithReaction.contains(userId);
-      
+
       if (hasReacted) {
         // Remove the reaction
         usersWithReaction.remove(userId);
         reactions[reactionType] = (reactions[reactionType] ?? 1) - 1;
-        
+
         // Remove the reaction type if count is 0
         if (reactions[reactionType] == 0) {
           reactions.remove(reactionType);
@@ -227,20 +224,20 @@ class FirestoreArticleService {
         usersWithReaction.add(userId);
         reactions[reactionType] = (reactions[reactionType] ?? 0) + 1;
       }
-      
+
       // Update the userReactions map
       if (usersWithReaction.isEmpty) {
         userReactions.remove(reactionType);
       } else {
         userReactions[reactionType] = usersWithReaction;
       }
-      
+
       // Update the document
       transaction.update(docRef, {
         'reactions': reactions,
         'userReactions': userReactions,
       });
-      
+
       // Get the updated document and return
       final updatedDoc = await docRef.get();
       return FirestoreArticleModel.fromFirestore(updatedDoc);
@@ -260,7 +257,7 @@ class FirestoreArticleService {
         .get();
 
     final queryLower = query.toLowerCase().trim();
-    
+
     if (queryLower.isEmpty) {
       return snapshot.docs
           .map((doc) => FirestoreArticleModel.fromFirestore(doc))
@@ -270,12 +267,11 @@ class FirestoreArticleService {
     return snapshot.docs
         .map((doc) => FirestoreArticleModel.fromFirestore(doc))
         .where((article) {
-          final titleMatch = article.title?.toLowerCase().contains(queryLower) ?? false;
-          final descMatch = article.description?.toLowerCase().contains(queryLower) ?? false;
-          final authorMatch = article.author?.toLowerCase().contains(queryLower) ?? false;
-          return titleMatch || descMatch || authorMatch;
-        })
-        .toList();
+      final titleMatch = article.title.toLowerCase().contains(queryLower);
+      final descMatch = article.description.toLowerCase().contains(queryLower);
+      final authorMatch = article.author.toLowerCase().contains(queryLower);
+      return titleMatch || descMatch || authorMatch;
+    }).toList();
   }
 }
 

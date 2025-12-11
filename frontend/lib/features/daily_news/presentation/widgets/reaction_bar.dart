@@ -17,16 +17,16 @@ import 'package:news_app_clean_architecture/features/daily_news/domain/entities/
 class ReactionBar extends StatefulWidget {
   /// Current reaction counts by type.
   final Map<String, int> reactions;
-  
+
   /// Map of reaction types to list of user IDs who reacted.
   final Map<String, List<String>> userReactions;
-  
+
   /// Current user's ID to highlight their reactions.
   final String? currentUserId;
-  
+
   /// Callback when a reaction is toggled.
   final Function(ArticleReaction reaction, bool isActive)? onReactionToggled;
-  
+
   /// Whether to show the bar in compact mode.
   final bool compact;
 
@@ -46,20 +46,6 @@ class ReactionBar extends StatefulWidget {
 class _ReactionBarState extends State<ReactionBar> {
   final Set<ArticleReaction> _animatingReactions = {};
 
-  /// Finds the user's current active reaction (if any).
-  /// Each user can only have ONE active reaction.
-  ArticleReaction? _getUserActiveReaction() {
-    if (widget.currentUserId == null) return null;
-    
-    for (final reaction in ArticleReaction.values) {
-      final users = widget.userReactions[reaction.name] ?? [];
-      if (users.contains(widget.currentUserId)) {
-        return reaction;
-      }
-    }
-    return null;
-  }
-
   bool _hasUserReacted(ArticleReaction reaction) {
     if (widget.currentUserId == null) return false;
     final users = widget.userReactions[reaction.name] ?? [];
@@ -72,18 +58,18 @@ class _ReactionBarState extends State<ReactionBar> {
 
   void _onReactionTap(ArticleReaction reaction) {
     final isActive = _hasUserReacted(reaction);
-    
+
     // Trigger animation
     setState(() {
       _animatingReactions.add(reaction);
     });
-    
+
     // Haptic feedback
     HapticService.reaction();
-    
+
     // Callback - the cubit handles single-reaction logic
     widget.onReactionToggled?.call(reaction, !isActive);
-    
+
     // Remove animation state after delay
     Future.delayed(const Duration(milliseconds: 300), () {
       if (mounted) {
@@ -168,11 +154,11 @@ class _ReactionBarState extends State<ReactionBar> {
           vertical: AppSpacing.xs,
         ),
         decoration: BoxDecoration(
-          color: isActive 
+          color: isActive
               ? _getReactionColor(reaction).withValues(alpha: 0.15)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(AppRadius.md),
-          border: isActive 
+          border: isActive
               ? Border.all(
                   color: _getReactionColor(reaction).withValues(alpha: 0.3),
                   width: 1,
@@ -184,14 +170,14 @@ class _ReactionBarState extends State<ReactionBar> {
           children: [
             // Emoji with animation
             _buildAnimatedEmoji(reaction, isAnimating),
-            
+
             SizedBox(height: AppSpacing.xxs),
-            
+
             // Count
             Text(
               count > 0 ? _formatCount(count) : '0',
               style: AppTypography.labelSmall.copyWith(
-                color: isActive 
+                color: isActive
                     ? _getReactionColor(reaction)
                     : AppColors.textMuted,
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
@@ -216,12 +202,12 @@ class _ReactionBarState extends State<ReactionBar> {
           vertical: AppSpacing.xxs,
         ),
         decoration: BoxDecoration(
-          color: isActive 
+          color: isActive
               ? _getReactionColor(reaction).withValues(alpha: 0.15)
               : AppColors.surfaceLight,
           borderRadius: BorderRadius.circular(AppRadius.full),
           border: Border.all(
-            color: isActive 
+            color: isActive
                 ? _getReactionColor(reaction).withValues(alpha: 0.3)
                 : AppColors.border,
             width: 1,
@@ -236,7 +222,7 @@ class _ReactionBarState extends State<ReactionBar> {
               Text(
                 _formatCount(count),
                 style: AppTypography.labelSmall.copyWith(
-                  color: isActive 
+                  color: isActive
                       ? _getReactionColor(reaction)
                       : AppColors.textSecondary,
                   fontWeight: FontWeight.w500,
@@ -250,7 +236,7 @@ class _ReactionBarState extends State<ReactionBar> {
   }
 
   Widget _buildAnimatedEmoji(
-    ArticleReaction reaction, 
+    ArticleReaction reaction,
     bool isAnimating, {
     double size = 24,
   }) {
@@ -345,7 +331,7 @@ class ReactionPicker extends StatelessWidget {
         children: ArticleReaction.values.asMap().entries.map((entry) {
           final index = entry.key;
           final reaction = entry.value;
-          
+
           return _ReactionPickerItem(
             reaction: reaction,
             index: index,
@@ -356,10 +342,10 @@ class ReactionPicker extends StatelessWidget {
           );
         }).toList(),
       ),
-    )
-    .animate()
-    .fadeIn(duration: 200.ms)
-    .scale(begin: const Offset(0.8, 0.8), end: const Offset(1, 1), duration: 200.ms);
+    ).animate().fadeIn(duration: 200.ms).scale(
+        begin: const Offset(0.8, 0.8),
+        end: const Offset(1, 1),
+        duration: 200.ms);
   }
 }
 
@@ -401,9 +387,9 @@ class _ReactionPickerItemState extends State<_ReactionPickerItem> {
         ),
       ),
     )
-    .animate(delay: Duration(milliseconds: widget.index * 50))
-    .fadeIn(duration: 150.ms)
-    .slideY(begin: 0.5, end: 0, duration: 200.ms);
+        .animate(delay: Duration(milliseconds: widget.index * 50))
+        .fadeIn(duration: 150.ms)
+        .slideY(begin: 0.5, end: 0, duration: 200.ms);
   }
 
   String _getEmoji(ArticleReaction reaction) {

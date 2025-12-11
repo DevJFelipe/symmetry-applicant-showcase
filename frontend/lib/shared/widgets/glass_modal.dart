@@ -15,7 +15,7 @@ class GlassModal extends StatelessWidget {
   final List<Widget>? actions;
   final VoidCallback? onDismiss;
   final double blurAmount;
-  
+
   const GlassModal({
     super.key,
     required this.child,
@@ -56,7 +56,7 @@ class GlassModal extends StatelessWidget {
                     gradient: AppColors.glassGradient,
                     borderRadius: AppRadius.modal,
                     border: Border.all(
-                      color: Colors.white.withOpacity(0.1),
+                      color: Colors.white.withValues(alpha: 0.1),
                       width: 1,
                     ),
                   ),
@@ -66,7 +66,7 @@ class GlassModal extends StatelessWidget {
                       filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                       child: Container(
                         padding: const EdgeInsets.all(AppSpacing.xxl),
-                        color: AppColors.surface.withOpacity(0.7),
+                        color: AppColors.surface.withValues(alpha: 0.7),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -99,10 +99,7 @@ class GlassModal extends StatelessWidget {
                       ),
                     ),
                   ),
-                )
-                    .animate()
-                    .fadeIn(duration: 200.ms)
-                    .scale(
+                ).animate().fadeIn(duration: 200.ms).scale(
                       begin: const Offset(0.9, 0.9),
                       end: const Offset(1, 1),
                       duration: 200.ms,
@@ -115,7 +112,7 @@ class GlassModal extends StatelessWidget {
       ),
     );
   }
-  
+
   /// Show the glass modal as an overlay
   static Future<T?> show<T>({
     required BuildContext context,
@@ -132,7 +129,8 @@ class GlassModal extends StatelessWidget {
       builder: (context) => GlassModal(
         title: title,
         actions: actions,
-        onDismiss: barrierDismissible ? () => Navigator.of(context).pop() : null,
+        onDismiss:
+            barrierDismissible ? () => Navigator.of(context).pop() : null,
         child: child,
       ),
     );
@@ -148,7 +146,7 @@ class ArticlePreviewModal extends StatelessWidget {
   final String? date;
   final VoidCallback onReadMore;
   final VoidCallback? onDismiss;
-  
+
   const ArticlePreviewModal({
     super.key,
     required this.title,
@@ -187,24 +185,20 @@ class ArticlePreviewModal extends StatelessWidget {
                   ),
                 ),
               ),
-            )
-                .animate()
-                .fadeIn(delay: 100.ms, duration: 200.ms),
-          
+            ).animate().fadeIn(delay: 100.ms, duration: 200.ms),
+
           const SizedBox(height: AppSpacing.lg),
-          
+
           // Title
           Text(
             title,
             style: AppTypography.headlineSmall,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-          )
-              .animate()
-              .fadeIn(delay: 150.ms, duration: 200.ms),
-          
+          ).animate().fadeIn(delay: 150.ms, duration: 200.ms),
+
           const SizedBox(height: AppSpacing.sm),
-          
+
           // Metadata
           if (author != null || date != null)
             Row(
@@ -236,24 +230,20 @@ class ArticlePreviewModal extends StatelessWidget {
                   ),
                 ],
               ],
-            )
-                .animate()
-                .fadeIn(delay: 200.ms, duration: 200.ms),
-          
+            ).animate().fadeIn(delay: 200.ms, duration: 200.ms),
+
           const SizedBox(height: AppSpacing.md),
-          
+
           // Description
           Text(
             description,
             style: AppTypography.bodySmall,
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
-          )
-              .animate()
-              .fadeIn(delay: 250.ms, duration: 200.ms),
-          
+          ).animate().fadeIn(delay: 250.ms, duration: 200.ms),
+
           const SizedBox(height: AppSpacing.xl),
-          
+
           // Read more button
           SizedBox(
             width: double.infinity,
@@ -272,7 +262,7 @@ class ArticlePreviewModal extends StatelessWidget {
       ),
     );
   }
-  
+
   /// Show article preview modal
   static Future<void> show({
     required BuildContext context,
@@ -312,7 +302,7 @@ class ConfirmationModal extends StatelessWidget {
   final VoidCallback onConfirm;
   final VoidCallback onCancel;
   final bool isDanger;
-  
+
   const ConfirmationModal({
     super.key,
     required this.title,
@@ -371,7 +361,7 @@ class ConfirmationModal extends StatelessWidget {
       ),
     );
   }
-  
+
   /// Show confirmation dialog
   static Future<bool> show({
     required BuildContext context,

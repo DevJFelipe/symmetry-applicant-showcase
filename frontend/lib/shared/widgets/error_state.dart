@@ -12,7 +12,7 @@ class ErrorStateWidget extends StatelessWidget {
   final IconData? icon;
   final String? retryLabel;
   final VoidCallback? onRetry;
-  
+
   const ErrorStateWidget({
     super.key,
     required this.title,
@@ -21,17 +21,18 @@ class ErrorStateWidget extends StatelessWidget {
     this.retryLabel,
     this.onRetry,
   });
-  
+
   /// Factory for network error
   static Widget network({VoidCallback? onRetry}) {
     return ErrorStateWidget(
       title: 'Connection Error',
-      message: 'Unable to connect to the server. Please check your internet connection.',
+      message:
+          'Unable to connect to the server. Please check your internet connection.',
       icon: Icons.wifi_off_rounded,
       onRetry: onRetry,
     );
   }
-  
+
   /// Factory for server error
   static Widget server({VoidCallback? onRetry}) {
     return ErrorStateWidget(
@@ -41,7 +42,7 @@ class ErrorStateWidget extends StatelessWidget {
       onRetry: onRetry,
     );
   }
-  
+
   /// Factory for generic error
   static Widget generic({String? message, VoidCallback? onRetry}) {
     return ErrorStateWidget(
@@ -72,16 +73,14 @@ class ErrorStateWidget extends StatelessWidget {
                 size: 48,
                 color: AppColors.error,
               ),
-            )
-                .animate(onPlay: (c) => c.repeat(reverse: true))
-                .scale(
+            ).animate(onPlay: (c) => c.repeat(reverse: true)).scale(
                   begin: const Offset(1, 1),
                   end: const Offset(1.05, 1.05),
                   duration: 1000.ms,
                 ),
-            
+
             const SizedBox(height: AppSpacing.xxl),
-            
+
             // Title
             Text(
               title,
@@ -89,10 +88,8 @@ class ErrorStateWidget extends StatelessWidget {
                 color: AppColors.error,
               ),
               textAlign: TextAlign.center,
-            )
-                .animate()
-                .fadeIn(delay: 100.ms, duration: 300.ms),
-            
+            ).animate().fadeIn(delay: 100.ms, duration: 300.ms),
+
             if (message != null) ...[
               const SizedBox(height: AppSpacing.sm),
               Text(
@@ -101,11 +98,9 @@ class ErrorStateWidget extends StatelessWidget {
                   color: AppColors.textSecondary,
                 ),
                 textAlign: TextAlign.center,
-              )
-                  .animate()
-                  .fadeIn(delay: 200.ms, duration: 300.ms),
+              ).animate().fadeIn(delay: 200.ms, duration: 300.ms),
             ],
-            
+
             if (onRetry != null) ...[
               const SizedBox(height: AppSpacing.xxl),
               _RetryButton(
@@ -127,7 +122,7 @@ class ErrorStateWidget extends StatelessWidget {
 class _RetryButton extends StatelessWidget {
   final String label;
   final VoidCallback onPressed;
-  
+
   const _RetryButton({
     required this.label,
     required this.onPressed,
@@ -155,7 +150,7 @@ class _RetryButton extends StatelessWidget {
 class ErrorMessage extends StatelessWidget {
   final String message;
   final VoidCallback? onDismiss;
-  
+
   const ErrorMessage({
     super.key,
     required this.message,
@@ -169,7 +164,7 @@ class ErrorMessage extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.errorSoft,
         borderRadius: AppRadius.borderMd,
-        border: Border.all(color: AppColors.error.withOpacity(0.3)),
+        border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
@@ -210,17 +205,18 @@ class ErrorMessage extends StatelessWidget {
 /// Preset error states for common scenarios
 class ErrorStates {
   ErrorStates._();
-  
+
   /// Network error
   static Widget network({VoidCallback? onRetry}) {
     return ErrorStateWidget(
       title: 'Connection Error',
-      message: 'Unable to connect to the server. Please check your internet connection.',
+      message:
+          'Unable to connect to the server. Please check your internet connection.',
       icon: Icons.wifi_off_rounded,
       onRetry: onRetry,
     );
   }
-  
+
   /// Server error
   static Widget server({VoidCallback? onRetry}) {
     return ErrorStateWidget(
@@ -230,7 +226,7 @@ class ErrorStates {
       onRetry: onRetry,
     );
   }
-  
+
   /// Generic error
   static Widget generic({String? message, VoidCallback? onRetry}) {
     return ErrorStateWidget(
@@ -239,7 +235,7 @@ class ErrorStates {
       onRetry: onRetry,
     );
   }
-  
+
   /// Permission denied
   static Widget permissionDenied({VoidCallback? onRetry}) {
     return ErrorStateWidget(
@@ -249,12 +245,13 @@ class ErrorStates {
       onRetry: onRetry,
     );
   }
-  
+
   /// Not found
   static Widget notFound({VoidCallback? onGoBack}) {
     return ErrorStateWidget(
       title: 'Not Found',
-      message: 'The content you\'re looking for doesn\'t exist or has been removed.',
+      message:
+          'The content you\'re looking for doesn\'t exist or has been removed.',
       icon: Icons.search_off_rounded,
       retryLabel: 'Go Back',
       onRetry: onGoBack,

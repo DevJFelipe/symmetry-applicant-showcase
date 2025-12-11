@@ -17,7 +17,7 @@ class PremiumAppBar extends StatelessWidget implements PreferredSizeWidget {
   final bool centerTitle;
   final bool showBackButton;
   final VoidCallback? onBackPressed;
-  
+
   const PremiumAppBar({
     super.key,
     this.title,
@@ -52,7 +52,7 @@ class PremiumAppBar extends StatelessWidget implements PreferredSizeWidget {
       actions: actions,
     );
   }
-  
+
   Widget _buildTitle() {
     if (title == null) return const SizedBox.shrink();
     return Text(
@@ -60,7 +60,7 @@ class PremiumAppBar extends StatelessWidget implements PreferredSizeWidget {
       style: AppTypography.titleLarge,
     );
   }
-  
+
   Widget _buildSearchBar(BuildContext context) {
     return GestureDetector(
       onTap: onSearchTap,
@@ -104,9 +104,7 @@ class PremiumAppBar extends StatelessWidget implements PreferredSizeWidget {
             ),
           ],
         ),
-      )
-          .animate()
-          .fadeIn(duration: 200.ms),
+      ).animate().fadeIn(duration: 200.ms),
     );
   }
 }
@@ -119,7 +117,7 @@ class PremiumSearchBar extends StatefulWidget {
   final VoidCallback? onClear;
   final bool autofocus;
   final TextEditingController? controller;
-  
+
   const PremiumSearchBar({
     super.key,
     this.hint,
@@ -137,7 +135,7 @@ class PremiumSearchBar extends StatefulWidget {
 class _PremiumSearchBarState extends State<PremiumSearchBar> {
   late TextEditingController _controller;
   bool _hasText = false;
-  
+
   @override
   void initState() {
     super.initState();
@@ -145,7 +143,7 @@ class _PremiumSearchBarState extends State<PremiumSearchBar> {
     _controller.addListener(_onTextChanged);
     _hasText = _controller.text.isNotEmpty;
   }
-  
+
   @override
   void dispose() {
     if (widget.controller == null) {
@@ -153,14 +151,14 @@ class _PremiumSearchBarState extends State<PremiumSearchBar> {
     }
     super.dispose();
   }
-  
+
   void _onTextChanged() {
     final hasText = _controller.text.isNotEmpty;
     if (hasText != _hasText) {
       setState(() => _hasText = hasText);
     }
   }
-  
+
   void _clearSearch() {
     _controller.clear();
     widget.onClear?.call();
@@ -236,7 +234,7 @@ class AnimatedFAB extends StatefulWidget {
   final bool extended;
   final Color? backgroundColor;
   final Color? foregroundColor;
-  
+
   const AnimatedFAB({
     super.key,
     required this.icon,
@@ -255,7 +253,7 @@ class _AnimatedFABState extends State<AnimatedFAB>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
-  
+
   @override
   void initState() {
     super.initState();
@@ -267,21 +265,21 @@ class _AnimatedFABState extends State<AnimatedFAB>
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
   }
-  
+
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
-  
+
   void _handleTapDown(TapDownDetails details) {
     _controller.forward();
   }
-  
+
   void _handleTapUp(TapUpDetails details) {
     _controller.reverse();
   }
-  
+
   void _handleTapCancel() {
     _controller.reverse();
   }
@@ -312,7 +310,7 @@ class _AnimatedFABState extends State<AnimatedFAB>
             boxShadow: [
               BoxShadow(
                 color: (widget.backgroundColor ?? AppColors.primary)
-                    .withOpacity(0.4),
+                    .withValues(alpha: 0.4),
                 blurRadius: 20,
                 offset: const Offset(0, 8),
               ),
@@ -339,10 +337,7 @@ class _AnimatedFABState extends State<AnimatedFAB>
           ),
         ),
       ),
-    )
-        .animate()
-        .fadeIn(duration: 300.ms, delay: 200.ms)
-        .scale(
+    ).animate().fadeIn(duration: 300.ms, delay: 200.ms).scale(
           begin: const Offset(0.8, 0.8),
           end: const Offset(1, 1),
           duration: 300.ms,
