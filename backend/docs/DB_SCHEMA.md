@@ -5,6 +5,7 @@
 1. [Introduction](#1-introduction)
 2. [Data Model](#2-data-model)
    - 2.1 [Articles Collection](#21-articles-collection)
+   - 2.2 [Reactions System](#22-reactions-system)
 3. [Cloud Storage](#3-cloud-storage)
 4. [Authentication](#4-authentication)
 5. [Security Rules](#5-security-rules)
@@ -23,6 +24,7 @@ This document specifies the database schema for the News Application's journalis
 The schema covers:
 
 - Article storage and retrieval for the news feed
+- **Reaction system for user engagement**
 - Media file organization in Cloud Storage
 - User authentication data structure
 - Security rules for data access control
@@ -56,6 +58,9 @@ The `articles` collection stores all news articles created by authenticated jour
 | `userId` | `string` | Firebase Auth UID of the creator | Yes | Must match authenticated user |
 | `urlToImage` | `string` | Cloud Storage download URL | Yes | Valid URL format |
 | `url` | `string` | External article URL | No | Valid URL format |
+| `source` | `string` | Article source name (e.g., "TechCrunch") | No | 1-100 characters |
+| `reactions` | `map` | Reaction counts by type | No | See [Reactions System](#22-reactions-system) |
+| `userReactions` | `map` | User IDs who reacted by type | No | See [Reactions System](#22-reactions-system) |
 | `publishedAt` | `Timestamp` | Publication date and time | Yes | Firestore Timestamp |
 | `createdAt` | `Timestamp` | Document creation timestamp | Yes | Firestore Timestamp |
 
@@ -91,6 +96,11 @@ The `articles` collection stores all news articles created by authenticated jour
 - Format: `https://firebasestorage.googleapis.com/v0/b/{bucket}/o/{path}?alt=media`
 - Referenced image stored in `/thumbnails/` directory
 
+**source**
+- Optional field for article attribution
+- Display name of the news source
+- Useful for aggregated or syndicated content
+
 **publishedAt**
 - Primary sort field for feed queries
 - Enables chronological article ordering
@@ -100,6 +110,93 @@ The `articles` collection stores all news articles created by authenticated jour
 - Audit field for document lifecycle tracking
 - Set once at document creation
 - Immutable after creation
+
+---
+
+### 2.2 Reactions System
+
+The reactions system allows users to express engagement with articles through predefined reaction types.
+
+#### Supported Reaction Types
+
+| Type | Emoji | Description |
+|:-----|:------|:------------|
+| `fire` | 🔥 | Trending/Hot content |
+| `love` | ❤️ | Love/Appreciate |
+| `thinking` | 🤔 | Thought-provoking |
+| `sad` | 😢 | Sad/Emotional |
+| `clap` | 👏 | Applause/Well done |
+
+#### Reactions Field Structure
+
+**`reactions`** - Aggregated count of reactions by type
+
+```json
+{
+  "reactions": {
+    "fire": 15,
+    "love": 42,
+    "thinking": 8,
+    "sad": 3,
+    "clap": 27
+  }
+}
+```
+
+| Property | Type | Description |
+|:---------|:-----|:------------|
+| `fire` | `number` | Count of fire reactions |
+| `love` | `number` | Count of love reactions |
+| `thinking` | `number` | Count of thinking reactions |
+| `sad` | `number` | Count of sad reactions |
+| `clap` | `number` | Count of clap reactions |
+
+**`userReactions`** - Tracks which users have reacted with each type
+
+```json
+{
+  "userReactions": {
+    "fire": ["uid123", "uid456", "uid789"],
+    "love": ["uid123", "uid999"],
+    "clap": ["uid456"]
+  }
+}
+```
+
+| Property | Type | Description |
+|:---------|:-----|:------------|
+| `{reactionType}` | `array<string>` | List of user UIDs who reacted with this type |
+
+#### Reaction Operations
+
+**Toggle Reaction** - Add or remove a user's reaction:
+
+1. Check if user UID exists in `userReactions.{type}` array
+2. If exists: Remove UID and decrement `reactions.{type}`
+3. If not exists: Add UID and increment `reactions.{type}`
+
+**Atomic Updates** - Use Firestore `arrayUnion`/`arrayRemove` and `increment`:
+
+```javascript
+// Add reaction
+firestore.collection('articles').doc(articleId).update({
+  'reactions.fire': FieldValue.increment(1),
+  'userReactions.fire': FieldValue.arrayUnion(userId)
+});
+
+// Remove reaction
+firestore.collection('articles').doc(articleId).update({
+  'reactions.fire': FieldValue.increment(-1),
+  'userReactions.fire': FieldValue.arrayRemove(userId)
+});
+```
+
+#### Design Considerations
+
+- **Embedded in Article Document**: Reactions are stored within the article document for efficient single-read access
+- **User Tracking**: `userReactions` allows checking if current user has reacted without additional queries
+- **Atomic Operations**: Using `increment()` and `arrayUnion()`/`arrayRemove()` prevents race conditions
+- **Privacy Trade-off**: User IDs in `userReactions` are visible to anyone reading the article; acceptable for this use case
 
 ---
 
@@ -320,7 +417,7 @@ firestore
 
 ## 8. Document Examples
 
-### Complete Article Document
+### Complete Article Document (with Reactions)
 
 ```json
 {
@@ -331,6 +428,20 @@ firestore
   "userId": "abc123def456ghi789",
   "urlToImage": "https://firebasestorage.googleapis.com/v0/b/starter-project-1319e.firebasestorage.app/o/thumbnails%2Fflutter-4-announcement.jpg?alt=media",
   "url": "https://flutter.dev/blog/flutter-4-release",
+  "source": "Flutter Blog",
+  "reactions": {
+    "fire": 15,
+    "love": 42,
+    "thinking": 8,
+    "sad": 0,
+    "clap": 27
+  },
+  "userReactions": {
+    "fire": ["uid123", "uid456", "uid789"],
+    "love": ["uid123", "uid999", "uid456"],
+    "thinking": ["uid789"],
+    "clap": ["uid123", "uid456"]
+  },
   "publishedAt": {
     "_seconds": 1733833800,
     "_nanoseconds": 0
@@ -370,3 +481,4 @@ firestore
 | Version | Date | Author | Changes |
 |:--------|:-----|:-------|:--------|
 | 1.0 | 2025-12-09 | Felipe Andrade | Initial schema definition |
+| 1.1 | 2025-12-11 | Felipe Andrade | Added Reactions System (reactions, userReactions fields), added source field |

@@ -371,11 +371,14 @@ class _CreateArticlePageState extends State<CreateArticlePage> {
 
   void _onSubmit(AuthAuthenticated authState) {
     if (_formKey.currentState?.validate() ?? false) {
+      final user = authState.user;
+      if (user == null) return;
+      
       context.read<CreateArticleCubit>().createArticle(
             title: _titleController.text,
             description: _descriptionController.text,
             content: _contentController.text,
-            currentUser: authState.user,
+            currentUser: user,
             url: _urlController.text,
           );
     }

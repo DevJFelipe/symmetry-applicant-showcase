@@ -1,100 +1,13 @@
 rules_version = '2';
 
-/**
- * Cloud Storage Security Rules
- * News Application - Applicant Showcase
- * 
- * This file defines access control rules for Firebase Cloud Storage.
- * Rules control read and write access to files in the storage bucket.
- * 
- * Documentation: https://firebase.google.com/docs/storage/security
- * 
- * @version 1.0
- * @date 2025-12-10
- */
-
 service firebase.storage {
   match /b/{bucket}/o {
-
-    // =========================================================================
-    // THUMBNAILS DIRECTORY
-    // =========================================================================
-    // 
-    // Path: /thumbnails/{imageId}
-    // 
-    // Stores article thumbnail images uploaded by journalists.
-    // Public read access for displaying images in the news feed.
-    // Authenticated write access with file validation.
-    //
-    // =========================================================================
-
     match /thumbnails/{imageId} {
-
-      // -----------------------------------------------------------------------
-      // READ OPERATION
-      // -----------------------------------------------------------------------
-      // Public access: any user can view/download thumbnail images.
-      // This enables public display of article images in the news feed.
-
+      // Public read access for article images
       allow read: if true;
-
-      // -----------------------------------------------------------------------
-      // WRITE OPERATIONS (create, update, delete)
-      // -----------------------------------------------------------------------
-      // Requirements:
-      //   1. User must be authenticated
-      //   2. File must pass image validation:
-      //      - Content type must be an allowed image format
-      //      - File size must be under 5 MB
-      //
-      // This prevents unauthorized uploads and ensures only valid images
-      // are stored in the thumbnails directory.
-
-      allow write: if isAuthenticated()
-                   && isValidImageFile();
-    }
-
-    // =========================================================================
-    // HELPER FUNCTIONS
-    // =========================================================================
-
-    /**
-     * Checks if the request is from an authenticated user.
-     * 
-     * @return {boolean} True if request.auth is not null
-     */
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-
-    /**
-     * Validates that the uploaded file is a valid image.
-     * 
-     * Validation criteria:
-     *   - File size must be less than 5 MB (5,242,880 bytes)
-     *   - Content type must be one of: image/jpeg, image/png, image/webp, image/gif
-     * 
-     * @return {boolean} True if file passes all validations
-     */
-    function isValidImageFile() {
-      // Maximum file size: 5 MB
-      let maxFileSize = 5 * 1024 * 1024;
       
-      // Allowed image MIME types
-      let allowedContentTypes = [
-        'image/jpeg',
-        'image/png',
-        'image/webp',
-        'image/gif'
-      ];
-
-      // Validate file size
-      let isValidSize = request.resource.size < maxFileSize;
-
-      // Validate content type
-      let isValidType = request.resource.contentType in allowedContentTypes;
-
-      return isValidSize && isValidType;
+      // Authenticated users can upload images
+      allow write: if request.auth != null;
     }
   }
 }

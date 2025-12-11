@@ -1,18 +1,33 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:news_app_clean_architecture/config/routes/routes.dart';
+import 'package:news_app_clean_architecture/config/theme/app_theme.dart';
+import 'package:news_app_clean_architecture/config/theme/app_colors.dart';
 import 'package:news_app_clean_architecture/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:news_app_clean_architecture/features/auth/presentation/pages/login_page.dart';
 import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article/remote/remote_article_event.dart';
-import 'package:news_app_clean_architecture/features/daily_news/presentation/pages/home/daily_news.dart';
+import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/my_articles/my_articles_cubit.dart';
+import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/search/search_cubit.dart';
 import 'package:news_app_clean_architecture/firebase_options.dart';
-import 'config/theme/app_themes.dart';
+import 'package:news_app_clean_architecture/shared/widgets/main_navigation_shell.dart';
+import 'package:news_app_clean_architecture/shared/widgets/premium_loading.dart';
 import 'features/daily_news/presentation/bloc/article/remote/remote_article_bloc.dart';
 import 'injection_container.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Set system UI overlay style for immersive dark theme
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+      systemNavigationBarColor: AppColors.background,
+      systemNavigationBarIconBrightness: Brightness.light,
+    ),
+  );
   
   // Initialize Firebase
   await Firebase.initializeApp(
@@ -25,7 +40,7 @@ Future<void> main() async {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -37,10 +52,17 @@ class MyApp extends StatelessWidget {
         BlocProvider<RemoteArticlesBloc>(
           create: (context) => sl()..add(const GetArticles()),
         ),
+        BlocProvider<MyArticlesCubit>(
+          create: (context) => sl<MyArticlesCubit>(),
+        ),
+        BlocProvider<SearchCubit>(
+          create: (context) => sl<SearchCubit>(),
+        ),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        theme: theme(),
+        title: 'Premium News',
+        theme: AppTheme.darkTheme,
         onGenerateRoute: AppRoutes.onGenerateRoutes,
         home: const AuthWrapper(),
       ),
@@ -50,7 +72,7 @@ class MyApp extends StatelessWidget {
 
 /// Wrapper widget that shows login or main content based on auth state.
 class AuthWrapper extends StatelessWidget {
-  const AuthWrapper({Key? key}) : super(key: key);
+  const AuthWrapper({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -59,13 +81,13 @@ class AuthWrapper extends StatelessWidget {
         if (state is AuthInitial || state is AuthLoading) {
           return const Scaffold(
             body: Center(
-              child: CircularProgressIndicator(),
+              child: PremiumLoading(),
             ),
           );
         }
 
         if (state is AuthAuthenticated) {
-          return const DailyNews();
+          return const MainNavigationShell();
         }
 
         // AuthUnauthenticated or AuthError - show login

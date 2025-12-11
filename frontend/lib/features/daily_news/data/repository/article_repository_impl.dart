@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:news_app_clean_architecture/core/error/app_exception.dart';
 import 'package:news_app_clean_architecture/features/daily_news/data/data_sources/local/app_database.dart';
 import 'package:news_app_clean_architecture/features/daily_news/data/models/article.dart';
 import 'package:news_app_clean_architecture/core/resources/data_state.dart';
@@ -31,14 +32,42 @@ class ArticleRepositoryImpl implements ArticleRepository {
             .toList();
         return DataSuccess(entities);
       } else {
-        return DataFailed(DioException(
-            error: httpResponse.response.statusMessage,
-            response: httpResponse.response,
-            type: DioExceptionType.badResponse,
-            requestOptions: httpResponse.response.requestOptions));
+        return DataFailed(NetworkException.fromStatusCode(
+          httpResponse.response.statusCode ?? 500,
+          message: httpResponse.response.statusMessage,
+        ));
       }
     } on DioException catch (e) {
-      return DataFailed(e);
+      return DataFailed(_mapDioException(e));
+    } catch (e) {
+      return DataFailed(UnknownException(originalError: e));
+    }
+  }
+  
+  /// Maps DioException to domain AppException
+  AppException _mapDioException(DioException e) {
+    switch (e.type) {
+      case DioExceptionType.connectionTimeout:
+      case DioExceptionType.sendTimeout:
+      case DioExceptionType.receiveTimeout:
+        return NetworkException.timeout();
+      case DioExceptionType.connectionError:
+        return NetworkException.noConnection();
+      case DioExceptionType.badResponse:
+        return NetworkException.fromStatusCode(
+          e.response?.statusCode ?? 500,
+          message: e.message,
+        );
+      case DioExceptionType.cancel:
+        return const NetworkException(
+          message: 'Request was cancelled',
+          code: 'CANCELLED',
+        );
+      default:
+        return NetworkException(
+          message: e.message ?? 'Network error',
+          originalError: e,
+        );
     }
   }
 

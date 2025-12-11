@@ -1,19 +1,9 @@
-import 'package:flutter/material.dart';
+// This file is deprecated. Use app_theme.dart instead.
+// Kept for backward compatibility during migration.
 
-ThemeData theme() {
-  return ThemeData(
-    scaffoldBackgroundColor: Colors.white,
-    fontFamily: 'Muli',
-    appBarTheme: appBarTheme()
-  );
-}
-
-AppBarTheme appBarTheme() {
-  return const AppBarTheme(
-    color: Colors.white,
-    elevation: 0,
-    centerTitle: true,
-    iconTheme: IconThemeData(color: Color(0XFF8B8B8B)),
-    titleTextStyle: TextStyle(color: Color(0XFF8B8B8B), fontSize: 18),
-  );
-}
+export 'app_theme.dart';
+export 'app_colors.dart';
+export 'app_typography.dart';
+export 'app_spacing.dart';
+export 'app_shadows.dart';
+export 'app_radius.dart';

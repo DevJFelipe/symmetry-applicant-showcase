@@ -147,6 +147,136 @@ class FirestoreArticleService {
       rethrow;
     }
   }
+
+  /// Updates specific fields of an article.
+  ///
+  /// Only updates the provided non-null fields.
+  Future<void> updateArticleFields({
+    required String articleId,
+    String? title,
+    String? description,
+    String? content,
+    String? urlToImage,
+  }) async {
+    final Map<String, dynamic> updates = {};
+    
+    if (title != null) updates['title'] = title;
+    if (description != null) updates['description'] = description;
+    if (content != null) updates['content'] = content;
+    if (urlToImage != null) updates['urlToImage'] = urlToImage;
+    
+    if (updates.isEmpty) return;
+    
+    await _firestore
+        .collection(_articlesCollection)
+        .doc(articleId)
+        .update(updates);
+  }
+
+  /// Toggles a reaction on an article for a specific user.
+  ///
+  /// If the user hasn't reacted with this type, adds the reaction.
+  /// If the user has already reacted with this type, removes it.
+  /// Returns the updated article.
+  Future<FirestoreArticleModel> toggleReaction({
+    required String articleId,
+    required String userId,
+    required String reactionType,
+  }) async {
+    return _firestore.runTransaction<FirestoreArticleModel>((transaction) async {
+      final docRef = _firestore.collection(_articlesCollection).doc(articleId);
+      final doc = await transaction.get(docRef);
+      
+      if (!doc.exists) {
+        throw FirestoreException(
+          code: 'not-found',
+          message: 'Article not found',
+        );
+      }
+      
+      final data = doc.data()!;
+      
+      // Get current reactions map or create empty one
+      final Map<String, int> reactions = Map<String, int>.from(
+        data['reactions'] as Map<String, dynamic>? ?? {},
+      );
+      
+      // Get current userReactions map or create empty one
+      final Map<String, List<dynamic>> userReactions = Map<String, List<dynamic>>.from(
+        data['userReactions'] as Map<String, dynamic>? ?? {},
+      );
+      
+      // Get the list of users who have this reaction
+      final List<String> usersWithReaction = List<String>.from(
+        userReactions[reactionType] ?? [],
+      );
+      
+      final bool hasReacted = usersWithReaction.contains(userId);
+      
+      if (hasReacted) {
+        // Remove the reaction
+        usersWithReaction.remove(userId);
+        reactions[reactionType] = (reactions[reactionType] ?? 1) - 1;
+        
+        // Remove the reaction type if count is 0
+        if (reactions[reactionType] == 0) {
+          reactions.remove(reactionType);
+        }
+      } else {
+        // Add the reaction
+        usersWithReaction.add(userId);
+        reactions[reactionType] = (reactions[reactionType] ?? 0) + 1;
+      }
+      
+      // Update the userReactions map
+      if (usersWithReaction.isEmpty) {
+        userReactions.remove(reactionType);
+      } else {
+        userReactions[reactionType] = usersWithReaction;
+      }
+      
+      // Update the document
+      transaction.update(docRef, {
+        'reactions': reactions,
+        'userReactions': userReactions,
+      });
+      
+      // Get the updated document and return
+      final updatedDoc = await docRef.get();
+      return FirestoreArticleModel.fromFirestore(updatedDoc);
+    });
+  }
+
+  /// Searches articles by title and description.
+  ///
+  /// Uses case-insensitive search on local data since Firestore
+  /// doesn't support full-text search natively.
+  Future<List<FirestoreArticleModel>> searchArticles(String query) async {
+    // Fetch all articles first (for small datasets this is acceptable)
+    // For large datasets, consider using Algolia or ElasticSearch
+    final snapshot = await _firestore
+        .collection(_articlesCollection)
+        .orderBy('publishedAt', descending: true)
+        .get();
+
+    final queryLower = query.toLowerCase().trim();
+    
+    if (queryLower.isEmpty) {
+      return snapshot.docs
+          .map((doc) => FirestoreArticleModel.fromFirestore(doc))
+          .toList();
+    }
+
+    return snapshot.docs
+        .map((doc) => FirestoreArticleModel.fromFirestore(doc))
+        .where((article) {
+          final titleMatch = article.title?.toLowerCase().contains(queryLower) ?? false;
+          final descMatch = article.description?.toLowerCase().contains(queryLower) ?? false;
+          final authorMatch = article.author?.toLowerCase().contains(queryLower) ?? false;
+          return titleMatch || descMatch || authorMatch;
+        })
+        .toList();
+  }
 }
 
 /// Exception class for Firestore operations.

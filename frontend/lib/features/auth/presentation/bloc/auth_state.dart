@@ -5,6 +5,12 @@ import 'package:news_app_clean_architecture/features/auth/domain/entities/user.d
 abstract class AuthState extends Equatable {
   const AuthState();
 
+  /// Returns the user if authenticated, null otherwise.
+  UserEntity? get user => null;
+
+  /// Returns true if the user is authenticated.
+  bool get isAuthenticated => user != null;
+
   @override
   List<Object?> get props => [];
 }
@@ -21,12 +27,15 @@ class AuthLoading extends AuthState {
 
 /// State when user is authenticated.
 class AuthAuthenticated extends AuthState {
-  final UserEntity user;
+  final UserEntity _user;
 
-  const AuthAuthenticated(this.user);
+  const AuthAuthenticated(this._user);
 
   @override
-  List<Object?> get props => [user];
+  UserEntity? get user => _user;
+
+  @override
+  List<Object?> get props => [_user];
 }
 
 /// State when user is not authenticated.

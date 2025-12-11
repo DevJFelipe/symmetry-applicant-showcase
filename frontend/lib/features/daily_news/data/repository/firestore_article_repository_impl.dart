@@ -60,11 +60,58 @@ class FirestoreArticleRepositoryImpl implements FirestoreArticleRepository {
       url: url,
       publishedAt: now,
       createdAt: now,
+      reactions: const {},
+      userReactions: const {},
     );
 
     // Save to Firestore and return the entity
     final createdArticle = await _articleService.createArticle(articleModel);
     return createdArticle.toEntity();
+  }
+
+  @override
+  Future<ArticleEntity> updateArticle({
+    required String articleId,
+    String? title,
+    String? description,
+    String? content,
+    File? thumbnailFile,
+  }) async {
+    // Get existing article
+    final existingArticle = await _articleService.getArticleById(articleId);
+    if (existingArticle == null) {
+      throw Exception('Article not found');
+    }
+
+    String? newImageUrl;
+    if (thumbnailFile != null) {
+      // Upload new thumbnail
+      newImageUrl = await _articleService.uploadThumbnail(
+        imageFile: thumbnailFile,
+        userId: existingArticle.userId,
+      );
+      // Optionally delete old image
+      if (existingArticle.urlToImage.isNotEmpty) {
+        try {
+          await _articleService.deleteThumbnail(existingArticle.urlToImage);
+        } catch (_) {
+          // Ignore deletion errors
+        }
+      }
+    }
+
+    // Update the article fields
+    await _articleService.updateArticleFields(
+      articleId: articleId,
+      title: title,
+      description: description,
+      content: content,
+      urlToImage: newImageUrl,
+    );
+
+    // Fetch and return the updated article
+    final updated = await _articleService.getArticleById(articleId);
+    return updated!.toEntity();
   }
 
   @override
@@ -78,4 +125,28 @@ class FirestoreArticleRepositoryImpl implements FirestoreArticleRepository {
       article?.urlToImage,
     );
   }
+
+  @override
+  Future<ArticleEntity> toggleReaction({
+    required String articleId,
+    required String userId,
+    required String reactionType,
+    required bool add,
+  }) async {
+    // Note: The 'add' parameter is handled internally by the service
+    // which toggles (adds if not present, removes if present)
+    final updatedModel = await _articleService.toggleReaction(
+      articleId: articleId,
+      userId: userId,
+      reactionType: reactionType,
+    );
+    return updatedModel.toEntity();
+  }
+
+  @override
+  Future<List<ArticleEntity>> searchArticles(String query) async {
+    final models = await _articleService.searchArticles(query);
+    return models.map((model) => model.toEntity()).toList();
+  }
 }
+

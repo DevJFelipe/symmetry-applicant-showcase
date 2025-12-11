@@ -7,17 +7,22 @@ import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/daily_news/domain/entities/article.dart';
 import '../../features/daily_news/presentation/bloc/article/create/create_article_cubit.dart';
-import '../../features/daily_news/presentation/pages/article_detail/article_detail.dart';
+import '../../features/daily_news/presentation/bloc/search/search_cubit.dart';
+import '../../features/daily_news/presentation/bloc/my_articles/my_articles_cubit.dart';
+import '../../features/daily_news/presentation/pages/article_detail/premium_article_detail.dart';
 import '../../features/daily_news/presentation/pages/create_article/create_article_page.dart';
-import '../../features/daily_news/presentation/pages/home/daily_news.dart';
+import '../../features/daily_news/presentation/pages/home/premium_daily_news.dart';
+import '../../features/daily_news/presentation/pages/my_articles/my_articles_page.dart';
+import '../../features/daily_news/presentation/pages/profile/profile_page.dart';
 import '../../features/daily_news/presentation/pages/saved_article/saved_article.dart';
+import '../../features/daily_news/presentation/pages/search/search_page.dart';
 
 
 class AppRoutes {
   static Route onGenerateRoutes(RouteSettings settings) {
     switch (settings.name) {
       case '/':
-        return _materialRoute(const DailyNews());
+        return _materialRoute(const PremiumDailyNews());
 
       case '/login':
         return _materialRoute(
@@ -44,13 +49,32 @@ class AppRoutes {
         );
 
       case '/ArticleDetails':
-        return _materialRoute(ArticleDetailsView(article: settings.arguments as ArticleEntity));
+        return _materialRoute(PremiumArticleDetail(article: settings.arguments as ArticleEntity));
 
       case '/SavedArticles':
         return _materialRoute(const SavedArticles());
+
+      case '/search':
+        return _materialRoute(
+          BlocProvider<SearchCubit>(
+            create: (_) => sl<SearchCubit>(),
+            child: const SearchPage(),
+          ),
+        );
+
+      case '/profile':
+        return _materialRoute(const ProfilePage());
+
+      case '/my-articles':
+        return _materialRoute(
+          BlocProvider<MyArticlesCubit>(
+            create: (_) => sl<MyArticlesCubit>(),
+            child: const MyArticlesPage(),
+          ),
+        );
         
       default:
-        return _materialRoute(const DailyNews());
+        return _materialRoute(const PremiumDailyNews());
     }
   }
 
@@ -58,3 +82,4 @@ class AppRoutes {
     return MaterialPageRoute(builder: (_) => view);
   }
 }
+

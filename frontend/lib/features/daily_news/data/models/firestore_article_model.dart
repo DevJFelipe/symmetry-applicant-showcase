@@ -16,6 +16,8 @@ class FirestoreArticleModel {
   final String? url;
   final DateTime publishedAt;
   final DateTime createdAt;
+  final Map<String, int>? reactions;
+  final Map<String, List<String>>? userReactions;
 
   const FirestoreArticleModel({
     this.id,
@@ -28,6 +30,8 @@ class FirestoreArticleModel {
     this.url,
     required this.publishedAt,
     required this.createdAt,
+    this.reactions,
+    this.userReactions,
   });
 
   /// Creates a [FirestoreArticleModel] from a Firestore document snapshot.
@@ -35,6 +39,30 @@ class FirestoreArticleModel {
     DocumentSnapshot<Map<String, dynamic>> doc,
   ) {
     final data = doc.data()!;
+    
+    // Parse reactions map
+    Map<String, int>? reactions;
+    if (data['reactions'] != null) {
+      reactions = Map<String, int>.from(
+        (data['reactions'] as Map).map(
+          (key, value) => MapEntry(key.toString(), (value as num).toInt()),
+        ),
+      );
+    }
+    
+    // Parse userReactions map
+    Map<String, List<String>>? userReactions;
+    if (data['userReactions'] != null) {
+      userReactions = Map<String, List<String>>.from(
+        (data['userReactions'] as Map).map(
+          (key, value) => MapEntry(
+            key.toString(),
+            List<String>.from(value as List),
+          ),
+        ),
+      );
+    }
+    
     return FirestoreArticleModel(
       id: doc.id,
       title: data['title'] as String,
@@ -46,6 +74,8 @@ class FirestoreArticleModel {
       url: data['url'] as String?,
       publishedAt: (data['publishedAt'] as Timestamp).toDate(),
       createdAt: (data['createdAt'] as Timestamp).toDate(),
+      reactions: reactions,
+      userReactions: userReactions,
     );
   }
 
@@ -61,6 +91,8 @@ class FirestoreArticleModel {
       if (url != null) 'url': url,
       'publishedAt': Timestamp.fromDate(publishedAt),
       'createdAt': Timestamp.fromDate(createdAt),
+      if (reactions != null) 'reactions': reactions,
+      if (userReactions != null) 'userReactions': userReactions,
     };
   }
 
@@ -68,13 +100,18 @@ class FirestoreArticleModel {
   ArticleEntity toEntity() {
     return ArticleEntity(
       id: id.hashCode, // Generate numeric ID from string ID
+      documentId: id,
       title: title,
       description: description,
       content: content,
       author: author,
+      userId: userId,
       urlToImage: urlToImage,
       url: url,
       publishedAt: publishedAt.toIso8601String(),
+      createdAt: createdAt.toIso8601String(),
+      reactions: reactions,
+      userReactions: userReactions,
     );
   }
 
@@ -98,6 +135,61 @@ class FirestoreArticleModel {
       url: entity.url,
       publishedAt: now,
       createdAt: now,
+      reactions: const {},
+      userReactions: const {},
+    );
+  }
+  
+  /// Creates a [FirestoreArticleModel] from an existing entity for updates.
+  factory FirestoreArticleModel.fromEntity(ArticleEntity entity) {
+    return FirestoreArticleModel(
+      id: entity.documentId,
+      title: entity.title ?? '',
+      description: entity.description ?? '',
+      content: entity.content ?? '',
+      author: entity.author ?? '',
+      userId: entity.userId ?? '',
+      urlToImage: entity.urlToImage ?? '',
+      url: entity.url,
+      publishedAt: entity.publishedAt != null 
+          ? DateTime.parse(entity.publishedAt!)
+          : DateTime.now(),
+      createdAt: entity.createdAt != null 
+          ? DateTime.parse(entity.createdAt!)
+          : DateTime.now(),
+      reactions: entity.reactions,
+      userReactions: entity.userReactions,
+    );
+  }
+  
+  /// Creates a copy with updated fields
+  FirestoreArticleModel copyWith({
+    String? id,
+    String? title,
+    String? description,
+    String? content,
+    String? author,
+    String? userId,
+    String? urlToImage,
+    String? url,
+    DateTime? publishedAt,
+    DateTime? createdAt,
+    Map<String, int>? reactions,
+    Map<String, List<String>>? userReactions,
+  }) {
+    return FirestoreArticleModel(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      content: content ?? this.content,
+      author: author ?? this.author,
+      userId: userId ?? this.userId,
+      urlToImage: urlToImage ?? this.urlToImage,
+      url: url ?? this.url,
+      publishedAt: publishedAt ?? this.publishedAt,
+      createdAt: createdAt ?? this.createdAt,
+      reactions: reactions ?? this.reactions,
+      userReactions: userReactions ?? this.userReactions,
     );
   }
 }

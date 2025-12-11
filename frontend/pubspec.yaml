@@ -1,5 +1,5 @@
 name: news_app_clean_architecture
-description: A new Flutter project.
+description: A premium news application with editorial design.
 
 publish_to: 'none'
 
@@ -14,26 +14,26 @@ dependencies:
 
   cupertino_icons: ^1.0.2
 
-  #icon
+  # Icons
   ionicons: ^0.2.2
 
-  #state management
+  # State management
   flutter_bloc: ^9.1.1
 
-  #comparing dart objects
+  # Comparing dart objects
   equatable: ^2.0.5
 
-  #service locator
+  # Service locator
   get_it: ^9.2.0
   
-  #dateFormat
+  # Date format
   intl: ^0.20.2
 
-  #Database
+  # Database
   floor: ^1.5.0
   sqflite: ^2.4.0
 
-  #make request to api
+  # HTTP requests
   retrofit: ^4.0.0
   dio: ^5.4.0
 
@@ -43,18 +43,43 @@ dependencies:
   firebase_storage: ^12.4.5
   firebase_auth: ^5.7.0
 
-
-  #Hooks
+  # Hooks
   flutter_hooks: ^0.21.2
 
-  #chached image 
+  # Cached images
   cached_network_image: ^3.2.0
 
-  #path provider (fix v1 embedding)
+  # Path provider
   path_provider: ^2.1.5
 
-  #image picker
+  # Image picker
   image_picker: ^1.0.7
+
+  # ========================================
+  # UI PREMIUM DEPENDENCIES
+  # ========================================
+  
+  # Animations
+  flutter_animate: ^4.5.2
+  flutter_staggered_animations: ^1.1.1
+  
+  # Shimmer loading effects
+  shimmer: ^3.0.0
+  
+  # Premium fonts (Playfair Display for headlines, Lato for body)
+  google_fonts: ^6.2.1
+  
+  # Haptic feedback
+  vibration: ^2.0.1
+  
+  # Glassmorphism effects
+  glass_kit: ^4.0.1
+  
+  # Pull to refresh
+  pull_to_refresh: ^2.0.0
+  
+  # UUID for unique identifiers
+  uuid: ^4.5.1
 
 dev_dependencies:
   flutter_test:

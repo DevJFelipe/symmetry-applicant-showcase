@@ -26,7 +26,13 @@ import 'package:news_app_clean_architecture/features/daily_news/data/data_source
 import 'package:news_app_clean_architecture/features/daily_news/data/repository/firestore_article_repository_impl.dart';
 import 'package:news_app_clean_architecture/features/daily_news/domain/repository/firestore_article_repository.dart';
 import 'package:news_app_clean_architecture/features/daily_news/domain/usecases/create_article.dart';
+import 'package:news_app_clean_architecture/features/daily_news/domain/usecases/toggle_reaction.dart';
+import 'package:news_app_clean_architecture/features/daily_news/domain/usecases/search_articles.dart';
+import 'package:news_app_clean_architecture/features/daily_news/domain/usecases/get_user_articles.dart';
+import 'package:news_app_clean_architecture/features/daily_news/domain/usecases/delete_article.dart';
 import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article/create/create_article_cubit.dart';
+import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/my_articles/my_articles_cubit.dart';
+import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/search/search_cubit.dart';
 
 final sl = GetIt.instance;
 
@@ -127,11 +133,42 @@ Future<void> initializeDependencies() async {
   sl.registerSingleton<CreateArticleUseCase>(
     CreateArticleUseCase(sl<FirestoreArticleRepository>())
   );
+  
+  sl.registerSingleton<ToggleReactionUseCase>(
+    ToggleReactionUseCase(sl<FirestoreArticleRepository>())
+  );
+  
+  sl.registerSingleton<SearchArticlesUseCase>(
+    SearchArticlesUseCase(sl<FirestoreArticleRepository>())
+  );
+  
+  sl.registerSingleton<GetUserArticlesUseCase>(
+    GetUserArticlesUseCase(sl<FirestoreArticleRepository>())
+  );
+  
+  sl.registerSingleton<DeleteArticleUseCase>(
+    DeleteArticleUseCase(sl<FirestoreArticleRepository>())
+  );
 
   // Create Article Cubit
   sl.registerFactory<CreateArticleCubit>(
     () => CreateArticleCubit(
       createArticleUseCase: sl<CreateArticleUseCase>(),
+    )
+  );
+
+  // My Articles Cubit
+  sl.registerFactory<MyArticlesCubit>(
+    () => MyArticlesCubit(
+      getUserArticlesUseCase: sl<GetUserArticlesUseCase>(),
+      deleteArticleUseCase: sl<DeleteArticleUseCase>(),
+    )
+  );
+
+  // Search Cubit
+  sl.registerFactory<SearchCubit>(
+    () => SearchCubit(
+      searchArticlesUseCase: sl<SearchArticlesUseCase>(),
     )
   );
 

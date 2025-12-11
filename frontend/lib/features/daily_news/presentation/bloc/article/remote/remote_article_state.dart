@@ -1,26 +1,36 @@
 import 'package:equatable/equatable.dart';
-import 'package:dio/dio.dart';
+import 'package:news_app_clean_architecture/core/error/app_exception.dart';
 import '../../../../domain/entities/article.dart';
 
-abstract class RemoteArticlesState extends Equatable {
+/// Base state for remote articles operations
+sealed class RemoteArticlesState extends Equatable {
   final List<ArticleEntity>? articles;
-  final DioException? error;
+  final AppException? error;
 
   const RemoteArticlesState({this.articles, this.error});
 
   @override
-  List<Object> get props => [articles!, error!];
+  List<Object?> get props => [articles, error];
 }
 
-class RemoteArticlesLoading extends RemoteArticlesState {
+/// Initial loading state
+final class RemoteArticlesLoading extends RemoteArticlesState {
   const RemoteArticlesLoading();
 }
 
-class RemoteArticlesDone extends RemoteArticlesState {
-  const RemoteArticlesDone(List<ArticleEntity> article)
-      : super(articles: article);
+/// Successfully loaded articles
+final class RemoteArticlesDone extends RemoteArticlesState {
+  const RemoteArticlesDone(List<ArticleEntity> articles)
+      : super(articles: articles);
 }
 
-class RemoteArticlesError extends RemoteArticlesState {
-  const RemoteArticlesError(DioException error) : super(error: error);
+/// Error state with domain-level exception
+final class RemoteArticlesError extends RemoteArticlesState {
+  const RemoteArticlesError(AppException error) : super(error: error);
 }
+
+/// Empty state when no articles are available
+final class RemoteArticlesEmpty extends RemoteArticlesState {
+  const RemoteArticlesEmpty();
+}
+
