@@ -2,35 +2,41 @@ import 'package:floor/floor.dart';
 import 'package:news_app_clean_architecture/features/daily_news/domain/entities/article.dart';
 import '../../../../core/constants/constants.dart';
 
-@Entity(tableName: 'article',primaryKeys: ['id'])
-class ArticleModel extends ArticleEntity {
-  const ArticleModel({
-    int ? id,
-    String ? author,
-    String ? title,
-    String ? description,
-    String ? url,
-    String ? urlToImage,
-    String ? publishedAt,
-    String ? content,
-  }): super(
-    id: id,
-    author: author,
-    title: title,
-    description: description,
-    url: url,
-    urlToImage: urlToImage,
-    publishedAt: publishedAt,
-    content: content,
-  );
+/// Model for local database storage using Floor.
+/// 
+/// This model does NOT extend ArticleEntity to avoid Floor trying to map
+/// unsupported types (SourceEntity, Map). Uses composition instead of inheritance.
+@Entity(tableName: 'article', primaryKeys: ['id'])
+class ArticleModel {
+  final int? id;
+  final String? author;
+  final String? title;
+  final String? description;
+  final String? url;
+  final String? urlToImage;
+  final String? publishedAt;
+  final String? content;
 
-  factory ArticleModel.fromJson(Map < String, dynamic > map) {
+  const ArticleModel({
+    this.id,
+    this.author,
+    this.title,
+    this.description,
+    this.url,
+    this.urlToImage,
+    this.publishedAt,
+    this.content,
+  });
+
+  factory ArticleModel.fromJson(Map<String, dynamic> map) {
     return ArticleModel(
       author: map['author'] ?? "",
       title: map['title'] ?? "",
       description: map['description'] ?? "",
       url: map['url'] ?? "",
-      urlToImage: map['urlToImage'] != null && map['urlToImage'] != "" ? map['urlToImage'] : kDefaultImage,
+      urlToImage: map['urlToImage'] != null && map['urlToImage'] != ""
+          ? map['urlToImage']
+          : kDefaultImage,
       publishedAt: map['publishedAt'] ?? "",
       content: map['content'] ?? "",
     );
@@ -49,7 +55,7 @@ class ArticleModel extends ArticleEntity {
     );
   }
 
-  /// Convierte el modelo a entidad de dominio.
+  /// Converts this model to a domain entity.
   ArticleEntity toEntity() {
     return ArticleEntity(
       id: id,

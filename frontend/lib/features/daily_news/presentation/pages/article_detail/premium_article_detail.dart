@@ -12,6 +12,7 @@ import 'package:news_app_clean_architecture/features/auth/presentation/bloc/auth
 import 'package:news_app_clean_architecture/features/daily_news/domain/entities/article.dart';
 import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article/local/local_article_bloc.dart';
 import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article/local/local_article_event.dart';
+import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article_detail/article_detail_cubit.dart';
 import 'package:news_app_clean_architecture/features/daily_news/presentation/widgets/reaction_bar.dart';
 import 'package:news_app_clean_architecture/injection_container.dart';
 
@@ -534,29 +535,64 @@ class _PremiumArticleDetailState extends State<PremiumArticleDetail> {
       left: AppSpacing.screenPaddingH,
       right: AppSpacing.screenPaddingH,
       bottom: AppSpacing.xl,
-      child: Container(
-        decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.shadowDark,
-              blurRadius: 20,
-              offset: const Offset(0, 8),
+      child: BlocConsumer<ArticleDetailCubit, ArticleDetailState>(
+        listener: (context, state) {
+          if (state is ArticleDetailError) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: AppColors.error,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+        },
+        builder: (context, state) {
+          // Get article from cubit state for optimistic updates
+          final article = switch (state) {
+            ArticleDetailLoaded(:final article) => article,
+            ArticleDetailUpdating(:final article) => article,
+            ArticleDetailError(:final article) => article,
+            ArticleDetailInitial() => widget.article,
+          };
+          
+          return Container(
+            decoration: BoxDecoration(
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.shadowDark,
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
             ),
-          ],
-        ),
-        child: ReactionBar(
-          reactions: widget.article.reactions ?? const {},
-          userReactions: widget.article.userReactions ?? const {},
-          currentUserId: currentUserId,
-          onReactionToggled: (reaction, isActive) {
-            // TODO: Implement reaction toggle via bloc
-            HapticService.reaction();
-          },
-        ),
-      )
-          .animate()
-          .fadeIn(duration: 400.ms, delay: 800.ms)
-          .slideY(begin: 0.5, end: 0),
+            child: ReactionBar(
+              reactions: article.reactions ?? const {},
+              userReactions: article.userReactions ?? const {},
+              currentUserId: currentUserId,
+              onReactionToggled: (reaction, isActive) {
+                if (currentUserId == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Please sign in to react'),
+                      backgroundColor: AppColors.error,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                  return;
+                }
+                context.read<ArticleDetailCubit>().toggleReaction(
+                  userId: currentUserId,
+                  reactionType: reaction,
+                );
+              },
+            ),
+          )
+              .animate()
+              .fadeIn(duration: 400.ms, delay: 800.ms)
+              .slideY(begin: 0.5, end: 0);
+        },
+      ),
     );
   }
 

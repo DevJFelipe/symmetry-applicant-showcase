@@ -419,11 +419,6 @@ class _PremiumDailyNewsState extends State<PremiumDailyNews>
     Navigator.pushNamed(context, '/SavedArticles');
   }
 
-  void _onArticleTapped(BuildContext context, ArticleEntity article) {
-    HapticService.lightImpact();
-    Navigator.pushNamed(context, '/ArticleDetails', arguments: article);
-  }
-
   void _onArticleLongPressed(BuildContext context, ArticleEntity article) {
     HapticService.mediumImpact();
     // Show article preview modal
@@ -440,7 +435,22 @@ class _PremiumDailyNewsState extends State<PremiumDailyNews>
 
   void _onCreateArticle(BuildContext context) {
     HapticService.lightImpact();
-    Navigator.pushNamed(context, '/create-article');
+    final bloc = context.read<RemoteArticlesBloc>();
+    Navigator.pushNamed(context, '/create-article').then((result) {
+      // Refresh feed if article was created
+      if (result == true) {
+        bloc.add(const GetArticles());
+      }
+    });
+  }
+
+  void _onArticleTapped(BuildContext context, ArticleEntity article) {
+    HapticService.lightImpact();
+    final bloc = context.read<RemoteArticlesBloc>();
+    Navigator.pushNamed(context, '/ArticleDetails', arguments: article).then((_) {
+      // Refresh feed when returning from article detail (in case reactions changed)
+      bloc.add(const GetArticles());
+    });
   }
 
   void _onMenuSelected(BuildContext context, String value) {

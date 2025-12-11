@@ -7,10 +7,13 @@ import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/daily_news/domain/entities/article.dart';
 import '../../features/daily_news/presentation/bloc/article/create/create_article_cubit.dart';
+import '../../features/daily_news/presentation/bloc/article/edit/edit_article_cubit.dart';
+import '../../features/daily_news/presentation/bloc/article_detail/article_detail_cubit.dart';
 import '../../features/daily_news/presentation/bloc/search/search_cubit.dart';
 import '../../features/daily_news/presentation/bloc/my_articles/my_articles_cubit.dart';
 import '../../features/daily_news/presentation/pages/article_detail/premium_article_detail.dart';
 import '../../features/daily_news/presentation/pages/create_article/create_article_page.dart';
+import '../../features/daily_news/presentation/pages/edit_article/edit_article_page.dart';
 import '../../features/daily_news/presentation/pages/home/premium_daily_news.dart';
 import '../../features/daily_news/presentation/pages/my_articles/my_articles_page.dart';
 import '../../features/daily_news/presentation/pages/profile/profile_page.dart';
@@ -49,7 +52,13 @@ class AppRoutes {
         );
 
       case '/ArticleDetails':
-        return _materialRoute(PremiumArticleDetail(article: settings.arguments as ArticleEntity));
+        final article = settings.arguments as ArticleEntity;
+        return _materialRoute(
+          BlocProvider<ArticleDetailCubit>(
+            create: (_) => sl<ArticleDetailCubit>()..loadArticle(article),
+            child: PremiumArticleDetail(article: article),
+          ),
+        );
 
       case '/SavedArticles':
         return _materialRoute(const SavedArticles());
@@ -70,6 +79,15 @@ class AppRoutes {
           BlocProvider<MyArticlesCubit>(
             create: (_) => sl<MyArticlesCubit>(),
             child: const MyArticlesPage(),
+          ),
+        );
+
+      case '/edit-article':
+        final article = settings.arguments as ArticleEntity;
+        return _materialRoute(
+          BlocProvider<EditArticleCubit>(
+            create: (_) => sl<EditArticleCubit>()..loadArticle(article),
+            child: const EditArticlePage(),
           ),
         );
         

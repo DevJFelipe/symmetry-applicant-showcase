@@ -30,7 +30,10 @@ import 'package:news_app_clean_architecture/features/daily_news/domain/usecases/
 import 'package:news_app_clean_architecture/features/daily_news/domain/usecases/search_articles.dart';
 import 'package:news_app_clean_architecture/features/daily_news/domain/usecases/get_user_articles.dart';
 import 'package:news_app_clean_architecture/features/daily_news/domain/usecases/delete_article.dart';
+import 'package:news_app_clean_architecture/features/daily_news/domain/usecases/update_article.dart';
 import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article/create/create_article_cubit.dart';
+import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article/edit/edit_article_cubit.dart';
+import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article_detail/article_detail_cubit.dart';
 import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/my_articles/my_articles_cubit.dart';
 import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/search/search_cubit.dart';
 
@@ -149,6 +152,10 @@ Future<void> initializeDependencies() async {
   sl.registerSingleton<DeleteArticleUseCase>(
     DeleteArticleUseCase(sl<FirestoreArticleRepository>())
   );
+  
+  sl.registerSingleton<UpdateArticleUseCase>(
+    UpdateArticleUseCase(sl<FirestoreArticleRepository>())
+  );
 
   // Create Article Cubit
   sl.registerFactory<CreateArticleCubit>(
@@ -169,6 +176,20 @@ Future<void> initializeDependencies() async {
   sl.registerFactory<SearchCubit>(
     () => SearchCubit(
       searchArticlesUseCase: sl<SearchArticlesUseCase>(),
+    )
+  );
+
+  // Article Detail Cubit (for reactions)
+  sl.registerFactory<ArticleDetailCubit>(
+    () => ArticleDetailCubit(
+      toggleReactionUseCase: sl<ToggleReactionUseCase>(),
+    )
+  );
+
+  // Edit Article Cubit
+  sl.registerFactory<EditArticleCubit>(
+    () => EditArticleCubit(
+      updateArticleUseCase: sl<UpdateArticleUseCase>(),
     )
   );
 

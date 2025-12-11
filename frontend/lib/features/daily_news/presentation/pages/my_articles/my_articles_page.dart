@@ -267,6 +267,7 @@ class _MyArticlesPageState extends State<MyArticlesPage> {
     );
 
     if (result == true && article.documentId != null) {
+      if (!mounted) return false;
       context.read<MyArticlesCubit>().deleteArticle(article.documentId!);
     }
     return false; // Deletion handled by cubit
@@ -279,7 +280,12 @@ class _MyArticlesPageState extends State<MyArticlesPage> {
 
   void _onEditArticle(ArticleEntity article) {
     HapticService.lightImpact();
-    // TODO: Navigate to edit article page
+    Navigator.pushNamed(context, '/edit-article', arguments: article).then((result) {
+      // Refresh list if article was updated
+      if (result != null && result is ArticleEntity) {
+        _loadArticlesIfNeeded();
+      }
+    });
   }
 
   void _onDeleteArticle(ArticleEntity article) => _confirmDelete(article);

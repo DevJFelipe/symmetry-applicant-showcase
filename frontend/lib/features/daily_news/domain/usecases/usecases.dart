@@ -8,6 +8,7 @@ export 'remove_article.dart';
 export 'save_article.dart';
 export 'search_articles.dart';
 export 'toggle_reaction.dart';
+export 'update_article.dart';
 
 // Params
 export 'params/toggle_reaction_params.dart';

@@ -45,13 +45,24 @@ class UpdateArticleParams {
   
   /// New content (optional).
   final String? content;
+  
+  /// New thumbnail image path (optional, replaces existing).
+  final String? newThumbnailPath;
 
   const UpdateArticleParams({
     required this.articleId,
     this.title,
     this.description,
     this.content,
+    this.newThumbnailPath,
   });
+  
+  /// Returns true if any field has been modified.
+  bool get hasChanges => 
+      title != null || 
+      description != null || 
+      content != null || 
+      newThumbnailPath != null;
 }
 
 /// Parameters for getting user articles.
