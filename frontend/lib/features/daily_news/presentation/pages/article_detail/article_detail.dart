@@ -5,7 +5,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:news_app_clean_architecture/config/theme/app_colors.dart';
 import 'package:news_app_clean_architecture/config/theme/app_spacing.dart';
 import 'package:news_app_clean_architecture/config/theme/app_typography.dart';
 import 'package:news_app_clean_architecture/config/theme/app_radius.dart';
@@ -17,6 +16,7 @@ import 'package:news_app_clean_architecture/features/daily_news/presentation/blo
 import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article_detail/article_detail_cubit.dart';
 import 'package:news_app_clean_architecture/features/daily_news/presentation/widgets/reaction_bar.dart';
 import 'package:news_app_clean_architecture/injection_container.dart';
+import 'package:news_app_clean_architecture/config/theme/theme_cubit.dart';
 
 /// Premium Article Detail page with immersive design.
 ///
@@ -58,13 +58,13 @@ class _PremiumArticleDetailState extends State<PremiumArticleDetail> {
 
   void _onScroll() {
     final offset = _scrollController.offset;
-    
+
     // Calculate image opacity based on scroll
     final newOpacity = 1.0 - (offset / 200).clamp(0.0, 0.5);
-    
+
     // Show title in app bar after scrolling past image
     final shouldShowTitle = offset > 250;
-    
+
     if (newOpacity != _imageOpacity || shouldShowTitle != _showTitle) {
       setState(() {
         _imageOpacity = newOpacity;
@@ -77,52 +77,61 @@ class _PremiumArticleDetailState extends State<PremiumArticleDetail> {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => sl<LocalArticleBloc>(),
-      child: AnnotatedRegion<SystemUiOverlayStyle>(
-        value: SystemUiOverlayStyle.light,
-        child: Scaffold(
-          backgroundColor: AppColors.background,
-          body: Stack(
-            children: [
-              // Main content
-              CustomScrollView(
-                controller: _scrollController,
-                physics: const BouncingScrollPhysics(),
-                slivers: [
-                  // Hero image with app bar
-                  _buildSliverAppBar(),
-                  
-                  // Article content
-                  _buildContent(),
-                  
-                  // Bottom spacing for reaction bar
-                  SliverPadding(
-                    padding: EdgeInsets.only(bottom: 100),
+      child: BlocBuilder<ThemeCubit, AppThemeMode>(
+        builder: (context, themeMode) {
+          final isDark = themeMode == AppThemeMode.dark;
+          final theme = Theme.of(context);
+
+          return AnnotatedRegion<SystemUiOverlayStyle>(
+            value:
+                isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+            child: Scaffold(
+              backgroundColor: theme.scaffoldBackgroundColor,
+              body: Stack(
+                children: [
+                  // Main content
+                  CustomScrollView(
+                    controller: _scrollController,
+                    physics: const BouncingScrollPhysics(),
+                    slivers: [
+                      // Hero image with app bar
+                      _buildSliverAppBar(context),
+
+                      // Article content
+                      _buildContent(context),
+
+                      // Bottom spacing for reaction bar
+                      SliverPadding(
+                        padding: EdgeInsets.only(bottom: 100),
+                      ),
+                    ],
                   ),
+
+                  // Floating reaction bar
+                  _buildFloatingReactionBar(context),
                 ],
               ),
-              
-              // Floating reaction bar
-              _buildFloatingReactionBar(),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildSliverAppBar() {
+  Widget _buildSliverAppBar(BuildContext context) {
     final imageUrl = widget.article.urlToImage;
-    
+    final theme = Theme.of(context);
+
     return SliverAppBar(
       expandedHeight: 350,
       pinned: true,
       stretch: true,
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       surfaceTintColor: Colors.transparent,
-      leading: _buildBackButton(),
+      leading: _buildBackButton(context),
       actions: [
-        _buildSaveButton(),
-        _buildShareButton(),
+        _buildSaveButton(context),
+        _buildShareButton(context),
       ],
       flexibleSpace: FlexibleSpaceBar(
         stretchModes: const [
@@ -135,7 +144,7 @@ class _PremiumArticleDetailState extends State<PremiumArticleDetail> {
           child: Text(
             widget.article.title ?? '',
             style: AppTypography.titleSmall.copyWith(
-              color: AppColors.textPrimary,
+              color: theme.colorScheme.onSurface,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -152,28 +161,28 @@ class _PremiumArticleDetailState extends State<PremiumArticleDetail> {
                   imageUrl: imageUrl,
                   fit: BoxFit.cover,
                   placeholder: (context, url) => Container(
-                    color: AppColors.surfaceLight,
+                    color: theme.colorScheme.surfaceContainerHighest,
                   ),
                   errorWidget: (context, url, error) => Container(
-                    color: AppColors.surfaceLight,
+                    color: theme.colorScheme.surfaceContainerHighest,
                     child: Icon(
                       Icons.broken_image_outlined,
                       size: 64,
-                      color: AppColors.textMuted,
+                      color: theme.colorScheme.onSurface.withOpacity(0.5),
                     ),
                   ),
                 ),
               )
             else
               Container(
-                color: AppColors.surfaceLight,
+                color: theme.colorScheme.surfaceContainerHighest,
                 child: Icon(
                   Icons.article_outlined,
                   size: 64,
-                  color: AppColors.textMuted,
+                  color: theme.colorScheme.onSurface.withOpacity(0.5),
                 ),
               ),
-            
+
             // Gradient overlay
             Container(
               decoration: BoxDecoration(
@@ -182,8 +191,8 @@ class _PremiumArticleDetailState extends State<PremiumArticleDetail> {
                   end: Alignment.bottomCenter,
                   colors: [
                     Colors.transparent,
-                    AppColors.background.withValues(alpha: 0.5),
-                    AppColors.background,
+                    theme.scaffoldBackgroundColor.withValues(alpha: 0.5),
+                    theme.scaffoldBackgroundColor,
                   ],
                   stops: const [0.0, 0.7, 1.0],
                 ),
@@ -195,7 +204,8 @@ class _PremiumArticleDetailState extends State<PremiumArticleDetail> {
     );
   }
 
-  Widget _buildBackButton() {
+  Widget _buildBackButton(BuildContext context) {
+    final theme = Theme.of(context);
     return GestureDetector(
       onTap: () {
         HapticService.lightImpact();
@@ -205,23 +215,24 @@ class _PremiumArticleDetailState extends State<PremiumArticleDetail> {
         margin: EdgeInsets.all(AppSpacing.sm),
         padding: EdgeInsets.all(AppSpacing.xs),
         decoration: BoxDecoration(
-          color: AppColors.surface.withValues(alpha: 0.8),
+          color: theme.colorScheme.surface.withValues(alpha: 0.8),
           shape: BoxShape.circle,
           border: Border.all(
-            color: AppColors.border,
+            color: theme.dividerColor,
             width: 1,
           ),
         ),
         child: Icon(
           Icons.arrow_back_ios_new_rounded,
-          color: AppColors.textPrimary,
+          color: theme.colorScheme.onSurface,
           size: 18,
         ),
       ),
     );
   }
 
-  Widget _buildSaveButton() {
+  Widget _buildSaveButton(BuildContext context) {
+    final theme = Theme.of(context);
     return Builder(
       builder: (context) => GestureDetector(
         onTap: () => _onSaveArticle(context),
@@ -232,16 +243,16 @@ class _PremiumArticleDetailState extends State<PremiumArticleDetail> {
           ),
           padding: EdgeInsets.all(AppSpacing.xs),
           decoration: BoxDecoration(
-            color: AppColors.surface.withValues(alpha: 0.8),
+            color: theme.colorScheme.surface.withValues(alpha: 0.8),
             shape: BoxShape.circle,
             border: Border.all(
-              color: AppColors.border,
+              color: theme.dividerColor,
               width: 1,
             ),
           ),
           child: Icon(
             Icons.bookmark_border_rounded,
-            color: AppColors.textPrimary,
+            color: theme.colorScheme.onSurface,
             size: 20,
           ),
         ),
@@ -249,7 +260,8 @@ class _PremiumArticleDetailState extends State<PremiumArticleDetail> {
     );
   }
 
-  Widget _buildShareButton() {
+  Widget _buildShareButton(BuildContext context) {
+    final theme = Theme.of(context);
     return GestureDetector(
       onTap: _onShareArticle,
       child: Container(
@@ -260,23 +272,24 @@ class _PremiumArticleDetailState extends State<PremiumArticleDetail> {
         ),
         padding: EdgeInsets.all(AppSpacing.xs),
         decoration: BoxDecoration(
-          color: AppColors.surface.withValues(alpha: 0.8),
+          color: theme.colorScheme.surface.withValues(alpha: 0.8),
           shape: BoxShape.circle,
           border: Border.all(
-            color: AppColors.border,
+            color: theme.dividerColor,
             width: 1,
           ),
         ),
         child: Icon(
           Icons.share_rounded,
-          color: AppColors.textPrimary,
+          color: theme.colorScheme.onSurface,
           size: 20,
         ),
       ),
     );
   }
 
-  Widget _buildContent() {
+  Widget _buildContent(BuildContext context) {
+    final theme = Theme.of(context);
     return SliverToBoxAdapter(
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: AppSpacing.screenPaddingH),
@@ -284,66 +297,64 @@ class _PremiumArticleDetailState extends State<PremiumArticleDetail> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Category tag
-            _buildCategoryTag()
+            _buildCategoryTag(context)
                 .animate()
                 .fadeIn(duration: 400.ms, delay: 100.ms),
-            
+
             SizedBox(height: AppSpacing.md),
-            
+
             // Title
             Text(
               widget.article.title ?? 'Untitled Article',
-              style: AppTypography.headlineLarge,
+              style: AppTypography.headlineLarge
+                  .copyWith(color: theme.colorScheme.onSurface),
             )
                 .animate()
                 .fadeIn(duration: 400.ms, delay: 200.ms)
                 .slideY(begin: 0.1, end: 0),
-            
+
             SizedBox(height: AppSpacing.lg),
-            
+
             // Author and date row
-            _buildAuthorRow()
+            _buildAuthorRow(context)
                 .animate()
                 .fadeIn(duration: 400.ms, delay: 300.ms),
-            
+
             SizedBox(height: AppSpacing.xl),
-            
+
             // Divider
             Container(
               height: 1,
-              color: AppColors.border,
+              color: theme.dividerColor,
             ).animate().fadeIn(duration: 400.ms, delay: 400.ms),
-            
+
             SizedBox(height: AppSpacing.xl),
-            
+
             // Description
             if (widget.article.description != null &&
                 widget.article.description!.isNotEmpty)
               Text(
                 widget.article.description!,
                 style: AppTypography.bodyLarge.copyWith(
-                  color: AppColors.textSecondary,
+                  color: theme.colorScheme.onSurfaceVariant,
                   fontStyle: FontStyle.italic,
                 ),
-              )
-                  .animate()
-                  .fadeIn(duration: 400.ms, delay: 500.ms),
-            
+              ).animate().fadeIn(duration: 400.ms, delay: 500.ms),
+
             SizedBox(height: AppSpacing.lg),
-            
+
             // Content
             Text(
               _cleanContent(widget.article.content),
-              style: AppTypography.articleBody,
-            )
-                .animate()
-                .fadeIn(duration: 400.ms, delay: 600.ms),
-            
+              style: AppTypography.articleBody
+                  .copyWith(color: theme.colorScheme.onSurface),
+            ).animate().fadeIn(duration: 400.ms, delay: 600.ms),
+
             SizedBox(height: AppSpacing.xxl),
-            
+
             // Source link
             if (widget.article.url != null)
-              _buildSourceLink()
+              _buildSourceLink(context)
                   .animate()
                   .fadeIn(duration: 400.ms, delay: 700.ms),
           ],
@@ -352,26 +363,27 @@ class _PremiumArticleDetailState extends State<PremiumArticleDetail> {
     );
   }
 
-  Widget _buildCategoryTag() {
+  Widget _buildCategoryTag(BuildContext context) {
     final source = widget.article.source?.name ?? 'Article';
-    
+    final theme = Theme.of(context);
+
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: AppSpacing.sm,
         vertical: AppSpacing.xxs,
       ),
       decoration: BoxDecoration(
-        color: AppColors.accent.withValues(alpha: 0.15),
+        color: theme.colorScheme.primary.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(AppRadius.sm),
         border: Border.all(
-          color: AppColors.accent.withValues(alpha: 0.3),
+          color: theme.colorScheme.primary.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
       child: Text(
         source.toUpperCase(),
         style: AppTypography.labelSmall.copyWith(
-          color: AppColors.accent,
+          color: theme.colorScheme.primary,
           fontWeight: FontWeight.w600,
           letterSpacing: 0.5,
         ),
@@ -379,28 +391,29 @@ class _PremiumArticleDetailState extends State<PremiumArticleDetail> {
     );
   }
 
-  Widget _buildAuthorRow() {
+  Widget _buildAuthorRow(BuildContext context) {
     final author = widget.article.author ?? 'Anonymous';
     final date = _formatDate(widget.article.publishedAt);
     final isOwn = _isOwnArticle();
-    
+    final theme = Theme.of(context);
+
     return Row(
       children: [
         // Author avatar
         CircleAvatar(
           radius: 20,
-          backgroundColor: AppColors.accent.withValues(alpha: 0.2),
+          backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.2),
           child: Text(
             author.isNotEmpty ? author[0].toUpperCase() : 'A',
             style: AppTypography.titleMedium.copyWith(
-              color: AppColors.accent,
+              color: theme.colorScheme.primary,
               fontWeight: FontWeight.bold,
             ),
           ),
         ),
-        
+
         SizedBox(width: AppSpacing.sm),
-        
+
         // Author info
         Expanded(
           child: Column(
@@ -410,7 +423,8 @@ class _PremiumArticleDetailState extends State<PremiumArticleDetail> {
                 children: [
                   Text(
                     author,
-                    style: AppTypography.titleSmall,
+                    style: AppTypography.titleSmall
+                        .copyWith(color: theme.colorScheme.onSurface),
                   ),
                   if (isOwn) ...[
                     SizedBox(width: AppSpacing.xs),
@@ -420,7 +434,10 @@ class _PremiumArticleDetailState extends State<PremiumArticleDetail> {
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        gradient: AppColors.accentGradient,
+                        gradient: LinearGradient(colors: [
+                          theme.colorScheme.primary,
+                          theme.colorScheme.tertiary,
+                        ]),
                         borderRadius: BorderRadius.circular(AppRadius.xs),
                       ),
                       child: Text(
@@ -438,13 +455,13 @@ class _PremiumArticleDetailState extends State<PremiumArticleDetail> {
               Text(
                 date,
                 style: AppTypography.bodySmall.copyWith(
-                  color: AppColors.textMuted,
+                  color: theme.colorScheme.onSurface.withOpacity(0.5),
                 ),
               ),
             ],
           ),
         ),
-        
+
         // Reading time estimate
         Container(
           padding: EdgeInsets.symmetric(
@@ -452,7 +469,7 @@ class _PremiumArticleDetailState extends State<PremiumArticleDetail> {
             vertical: AppSpacing.xxs,
           ),
           decoration: BoxDecoration(
-            color: AppColors.surfaceLight,
+            color: theme.colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(AppRadius.full),
           ),
           child: Row(
@@ -461,13 +478,13 @@ class _PremiumArticleDetailState extends State<PremiumArticleDetail> {
               Icon(
                 Icons.schedule_rounded,
                 size: 14,
-                color: AppColors.textMuted,
+                color: theme.colorScheme.onSurface.withOpacity(0.5),
               ),
               SizedBox(width: AppSpacing.xxs),
               Text(
                 _estimateReadingTime(),
                 style: AppTypography.labelSmall.copyWith(
-                  color: AppColors.textMuted,
+                  color: theme.colorScheme.onSurface.withOpacity(0.5),
                 ),
               ),
             ],
@@ -477,16 +494,17 @@ class _PremiumArticleDetailState extends State<PremiumArticleDetail> {
     );
   }
 
-  Widget _buildSourceLink() {
+  Widget _buildSourceLink(BuildContext context) {
+    final theme = Theme.of(context);
     return GestureDetector(
       onTap: _onOpenSource,
       child: Container(
         padding: EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: theme.cardColor,
           borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(
-            color: AppColors.border,
+            color: theme.dividerColor,
             width: 1,
           ),
         ),
@@ -494,7 +512,7 @@ class _PremiumArticleDetailState extends State<PremiumArticleDetail> {
           children: [
             Icon(
               Icons.link_rounded,
-              color: AppColors.accent,
+              color: theme.colorScheme.primary,
               size: 20,
             ),
             SizedBox(width: AppSpacing.sm),
@@ -505,13 +523,13 @@ class _PremiumArticleDetailState extends State<PremiumArticleDetail> {
                   Text(
                     'View Original Article',
                     style: AppTypography.titleSmall.copyWith(
-                      color: AppColors.accent,
+                      color: theme.colorScheme.primary,
                     ),
                   ),
                   Text(
                     widget.article.url ?? '',
                     style: AppTypography.bodySmall.copyWith(
-                      color: AppColors.textMuted,
+                      color: theme.colorScheme.onSurface.withOpacity(0.5),
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -521,7 +539,7 @@ class _PremiumArticleDetailState extends State<PremiumArticleDetail> {
             ),
             Icon(
               Icons.arrow_forward_ios_rounded,
-              color: AppColors.accent,
+              color: theme.colorScheme.primary,
               size: 16,
             ),
           ],
@@ -530,9 +548,10 @@ class _PremiumArticleDetailState extends State<PremiumArticleDetail> {
     );
   }
 
-  Widget _buildFloatingReactionBar() {
+  Widget _buildFloatingReactionBar(BuildContext context) {
     final currentUserId = context.read<AuthCubit>().state.user?.uid;
-    
+    final theme = Theme.of(context);
+
     return Positioned(
       left: AppSpacing.screenPaddingH,
       right: AppSpacing.screenPaddingH,
@@ -543,7 +562,7 @@ class _PremiumArticleDetailState extends State<PremiumArticleDetail> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(state.message),
-                backgroundColor: AppColors.error,
+                backgroundColor: theme.colorScheme.error,
                 behavior: SnackBarBehavior.floating,
               ),
             );
@@ -557,12 +576,13 @@ class _PremiumArticleDetailState extends State<PremiumArticleDetail> {
             ArticleDetailError(:final article) => article,
             ArticleDetailInitial() => widget.article,
           };
-          
+
           return Container(
             decoration: BoxDecoration(
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.shadowDark,
+                  color: Colors.black.withOpacity(
+                      0.2), // Keep shadow dark even in light mode for lift
                   blurRadius: 20,
                   offset: const Offset(0, 8),
                 ),
@@ -577,16 +597,16 @@ class _PremiumArticleDetailState extends State<PremiumArticleDetail> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('Please sign in to react'),
-                      backgroundColor: AppColors.error,
+                      backgroundColor: theme.colorScheme.error,
                       behavior: SnackBarBehavior.floating,
                     ),
                   );
                   return;
                 }
                 context.read<ArticleDetailCubit>().toggleReaction(
-                  userId: currentUserId,
-                  reactionType: reaction,
-                );
+                      userId: currentUserId,
+                      reactionType: reaction,
+                    );
               },
             ),
           )
@@ -599,14 +619,15 @@ class _PremiumArticleDetailState extends State<PremiumArticleDetail> {
   }
 
   // Helper methods
-  
+
   /// Cleans the article content by removing the "[+XXXX chars]" suffix
   /// that comes from external news APIs.
   String _cleanContent(String? content) {
     if (content == null || content.isEmpty) return 'No content available.';
-    
+
     // Remove patterns like "[+1234 chars]" or "... [+1234 chars]"
-    final cleanedContent = content.replaceAll(RegExp(r'\s*\[\+\d+\s*chars\]'), '');
+    final cleanedContent =
+        content.replaceAll(RegExp(r'\s*\[\+\d+\s*chars\]'), '');
     return cleanedContent.trim();
   }
 
@@ -618,12 +639,22 @@ class _PremiumArticleDetailState extends State<PremiumArticleDetail> {
 
   String _formatDate(String? dateStr) {
     if (dateStr == null) return '';
-    
+
     try {
       final date = DateTime.parse(dateStr);
       final months = [
-        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
       ];
       return '${months[date.month - 1]} ${date.day}, ${date.year}';
     } catch (_) {
@@ -642,26 +673,27 @@ class _PremiumArticleDetailState extends State<PremiumArticleDetail> {
   void _onSaveArticle(BuildContext context) {
     HapticService.success();
     BlocProvider.of<LocalArticleBloc>(context).add(SaveArticle(widget.article));
-    
+    final theme = Theme.of(context);
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
           children: [
             Icon(
               Icons.bookmark_added_rounded,
-              color: AppColors.success,
+              color: Colors.green,
               size: 20,
             ),
             SizedBox(width: AppSpacing.sm),
             Text(
               'Article saved',
               style: AppTypography.bodyMedium.copyWith(
-                color: AppColors.textPrimary,
+                color: theme.colorScheme.onInverseSurface,
               ),
             ),
           ],
         ),
-        backgroundColor: AppColors.surface,
+        backgroundColor: theme.colorScheme.inverseSurface,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.md),
@@ -673,15 +705,16 @@ class _PremiumArticleDetailState extends State<PremiumArticleDetail> {
 
   Future<void> _onShareArticle() async {
     HapticService.lightImpact();
-    
+    final theme = Theme.of(context);
+
     final title = widget.article.title ?? 'Check out this article';
     final url = widget.article.url ?? '';
     final description = widget.article.description ?? '';
-    
+
     final shareText = url.isNotEmpty
         ? '$title\n\n$description\n\n$url'
         : '$title\n\n$description';
-    
+
     try {
       await Share.share(
         shareText,
@@ -692,7 +725,7 @@ class _PremiumArticleDetailState extends State<PremiumArticleDetail> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Could not share article'),
-            backgroundColor: AppColors.error,
+            backgroundColor: theme.colorScheme.error,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -702,31 +735,32 @@ class _PremiumArticleDetailState extends State<PremiumArticleDetail> {
 
   Future<void> _onOpenSource() async {
     HapticService.lightImpact();
-    
+    final theme = Theme.of(context);
+
     final urlString = widget.article.url;
     if (urlString == null || urlString.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('No source URL available'),
-          backgroundColor: AppColors.error,
+          backgroundColor: theme.colorScheme.error,
           behavior: SnackBarBehavior.floating,
         ),
       );
       return;
     }
-    
+
     final uri = Uri.tryParse(urlString);
     if (uri == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Invalid URL'),
-          backgroundColor: AppColors.error,
+          backgroundColor: theme.colorScheme.error,
           behavior: SnackBarBehavior.floating,
         ),
       );
       return;
     }
-    
+
     try {
       // Launch directly without checking canLaunchUrl first
       // canLaunchUrl can return false on some Android versions even when launch works
@@ -734,12 +768,12 @@ class _PremiumArticleDetailState extends State<PremiumArticleDetail> {
         uri,
         mode: LaunchMode.externalApplication,
       );
-      
+
       if (!launched && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Could not open URL'),
-            backgroundColor: AppColors.error,
+            backgroundColor: theme.colorScheme.error,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -749,7 +783,7 @@ class _PremiumArticleDetailState extends State<PremiumArticleDetail> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error opening URL'),
-            backgroundColor: AppColors.error,
+            backgroundColor: theme.colorScheme.error,
             behavior: SnackBarBehavior.floating,
           ),
         );

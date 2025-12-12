@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:news_app_clean_architecture/config/routes/routes.dart';
 import 'package:news_app_clean_architecture/config/theme/app_theme.dart';
 import 'package:news_app_clean_architecture/config/theme/app_colors.dart';
+import 'package:news_app_clean_architecture/config/theme/theme_cubit.dart';
 import 'package:news_app_clean_architecture/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:news_app_clean_architecture/features/auth/presentation/pages/login_page.dart';
 import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article/remote/remote_article_event.dart';
@@ -18,22 +19,12 @@ import 'injection_container.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // Set system UI overlay style for immersive dark theme
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
-      systemNavigationBarColor: AppColors.background,
-      systemNavigationBarIconBrightness: Brightness.light,
-    ),
-  );
-  
+
   // Initialize Firebase
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  
+
   await initializeDependencies();
 
   runApp(const MyApp());
@@ -46,6 +37,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
+        BlocProvider<ThemeCubit>(
+          create: (context) => sl<ThemeCubit>(),
+        ),
         BlocProvider<AuthCubit>(
           create: (context) => sl<AuthCubit>()..checkAuthStatus(),
         ),
@@ -59,12 +53,34 @@ class MyApp extends StatelessWidget {
           create: (context) => sl<SearchCubit>(),
         ),
       ],
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        title: 'Premium News',
-        theme: AppTheme.darkTheme,
-        onGenerateRoute: AppRoutes.onGenerateRoutes,
-        home: const AuthWrapper(),
+      child: BlocBuilder<ThemeCubit, AppThemeMode>(
+        builder: (context, themeMode) {
+          // Update system UI overlay based on theme
+          final isDark = themeMode == AppThemeMode.dark;
+          SystemChrome.setSystemUIOverlayStyle(
+            SystemUiOverlayStyle(
+              statusBarColor: Colors.transparent,
+              statusBarIconBrightness:
+                  isDark ? Brightness.light : Brightness.dark,
+              systemNavigationBarColor:
+                  isDark ? AppColors.background : AppColorsLight.background,
+              systemNavigationBarIconBrightness:
+                  isDark ? Brightness.light : Brightness.dark,
+            ),
+          );
+
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            title: 'Premium News',
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: themeMode == AppThemeMode.dark
+                ? ThemeMode.dark
+                : ThemeMode.light,
+            onGenerateRoute: AppRoutes.onGenerateRoutes,
+            home: const AuthWrapper(),
+          );
+        },
       ),
     );
   }

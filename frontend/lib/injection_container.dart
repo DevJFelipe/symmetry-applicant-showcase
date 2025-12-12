@@ -44,6 +44,7 @@ import 'package:news_app_clean_architecture/features/daily_news/presentation/blo
 import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article_detail/article_detail_cubit.dart';
 import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/my_articles/my_articles_cubit.dart';
 import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/search/search_cubit.dart';
+import 'package:news_app_clean_architecture/config/theme/theme_cubit.dart';
 
 final sl = GetIt.instance;
 
@@ -56,6 +57,9 @@ Future<void> initializeDependencies() async {
   final sharedPreferences = await SharedPreferences.getInstance();
   sl.registerSingleton<PreferencesService>(
       PreferencesService(sharedPreferences));
+
+  // Theme Cubit
+  sl.registerSingleton<ThemeCubit>(ThemeCubit(sl<PreferencesService>()));
 
   final database =
       await $FloorAppDatabase.databaseBuilder('app_database.db').build();
@@ -98,8 +102,8 @@ Future<void> initializeDependencies() async {
   sl.registerSingleton<ProfileStorageService>(ProfileStorageService());
 
   // Auth Repository
-  sl.registerSingleton<AuthRepository>(
-      AuthRepositoryImpl(sl<FirebaseAuthService>(), sl<ProfileStorageService>()));
+  sl.registerSingleton<AuthRepository>(AuthRepositoryImpl(
+      sl<FirebaseAuthService>(), sl<ProfileStorageService>()));
 
   // Auth UseCases
   sl.registerSingleton<GetCurrentUserUseCase>(

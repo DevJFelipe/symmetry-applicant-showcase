@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:news_app_clean_architecture/config/theme/app_colors.dart';
 import 'package:news_app_clean_architecture/config/theme/app_spacing.dart';
 import 'package:news_app_clean_architecture/config/theme/app_typography.dart';
 import 'package:news_app_clean_architecture/config/theme/app_radius.dart';
@@ -51,6 +50,13 @@ class ReactionBar extends StatefulWidget {
 class _ReactionBarState extends State<ReactionBar> {
   final Set<ArticleReaction> _animatingReactions = {};
 
+  // Reaction colors
+  static const Color reactionLove = Color(0xFFFF2D55);
+  static const Color reactionFire = Color(0xFFFF9500);
+  static const Color reactionThinking = Color(0xFFFFCC00);
+  static const Color reactionSad = Color(0xFFAF52DE);
+  static const Color reactionClap = Color(0xFF5856D6);
+
   bool _hasUserReacted(ArticleReaction reaction) {
     if (widget.currentUserId == null) return false;
     final users = widget.userReactions[reaction.name] ?? [];
@@ -98,35 +104,36 @@ class _ReactionBarState extends State<ReactionBar> {
   @override
   Widget build(BuildContext context) {
     if (widget.compact) {
-      return _buildCompactBar();
+      return _buildCompactBar(context);
     }
-    return _buildFullBar();
+    return _buildFullBar(context);
   }
 
-  Widget _buildFullBar() {
+  Widget _buildFullBar(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: AppSpacing.md,
         vertical: AppSpacing.sm,
       ),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
-          color: AppColors.border,
+          color: theme.dividerColor,
           width: 1,
         ),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: ArticleReaction.values.map((reaction) {
-          return _buildReactionButton(reaction);
+          return _buildReactionButton(context, reaction);
         }).toList(),
       ),
     );
   }
 
-  Widget _buildCompactBar() {
+  Widget _buildCompactBar(BuildContext context) {
     // Only show reactions that have counts > 0 or user's active reactions
     final activeReactions = ArticleReaction.values.where((r) {
       return _getCount(r) > 0 || _hasUserReacted(r);
@@ -136,11 +143,11 @@ class _ReactionBarState extends State<ReactionBar> {
       // Show just the most common reactions for adding
       return Row(
         children: [
-          _buildCompactButton(ArticleReaction.fire),
+          _buildCompactButton(context, ArticleReaction.fire),
           SizedBox(width: AppSpacing.xs),
-          _buildCompactButton(ArticleReaction.love),
+          _buildCompactButton(context, ArticleReaction.love),
           SizedBox(width: AppSpacing.xs),
-          _buildCompactButton(ArticleReaction.clap),
+          _buildCompactButton(context, ArticleReaction.clap),
         ],
       );
     }
@@ -149,16 +156,17 @@ class _ReactionBarState extends State<ReactionBar> {
       children: activeReactions.take(4).map((reaction) {
         return Padding(
           padding: EdgeInsets.only(right: AppSpacing.xs),
-          child: _buildCompactButton(reaction),
+          child: _buildCompactButton(context, reaction),
         );
       }).toList(),
     );
   }
 
-  Widget _buildReactionButton(ArticleReaction reaction) {
+  Widget _buildReactionButton(BuildContext context, ArticleReaction reaction) {
     final isActive = _hasUserReacted(reaction);
     final count = _getCount(reaction);
     final isAnimating = _animatingReactions.contains(reaction);
+    final theme = Theme.of(context);
 
     return GestureDetector(
       onTapUp: (details) => _onReactionTap(reaction, details),
@@ -194,7 +202,7 @@ class _ReactionBarState extends State<ReactionBar> {
               style: AppTypography.labelSmall.copyWith(
                 color: isActive
                     ? _getReactionColor(reaction)
-                    : AppColors.textMuted,
+                    : theme.colorScheme.onSurface.withOpacity(0.5),
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
               ),
             ),
@@ -204,10 +212,11 @@ class _ReactionBarState extends State<ReactionBar> {
     );
   }
 
-  Widget _buildCompactButton(ArticleReaction reaction) {
+  Widget _buildCompactButton(BuildContext context, ArticleReaction reaction) {
     final isActive = _hasUserReacted(reaction);
     final count = _getCount(reaction);
     final isAnimating = _animatingReactions.contains(reaction);
+    final theme = Theme.of(context);
 
     return GestureDetector(
       onTapUp: (details) => _onReactionTap(reaction, details),
@@ -219,12 +228,12 @@ class _ReactionBarState extends State<ReactionBar> {
         decoration: BoxDecoration(
           color: isActive
               ? _getReactionColor(reaction).withValues(alpha: 0.15)
-              : AppColors.surfaceLight,
+              : theme.colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(AppRadius.full),
           border: Border.all(
             color: isActive
                 ? _getReactionColor(reaction).withValues(alpha: 0.3)
-                : AppColors.border,
+                : theme.dividerColor,
             width: 1,
           ),
         ),
@@ -239,7 +248,7 @@ class _ReactionBarState extends State<ReactionBar> {
                 style: AppTypography.labelSmall.copyWith(
                   color: isActive
                       ? _getReactionColor(reaction)
-                      : AppColors.textSecondary,
+                      : theme.colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -286,15 +295,15 @@ class _ReactionBarState extends State<ReactionBar> {
   Color _getReactionColor(ArticleReaction reaction) {
     switch (reaction) {
       case ArticleReaction.fire:
-        return AppColors.reactionFire;
+        return reactionFire;
       case ArticleReaction.love:
-        return AppColors.reactionLove;
+        return reactionLove;
       case ArticleReaction.thinking:
-        return AppColors.reactionThinking;
+        return reactionThinking;
       case ArticleReaction.sad:
-        return AppColors.reactionSad;
+        return reactionSad;
       case ArticleReaction.clap:
-        return AppColors.reactionClap;
+        return reactionClap;
     }
   }
 
@@ -321,23 +330,24 @@ class ReactionPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: AppSpacing.md,
         vertical: AppSpacing.sm,
       ),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(AppRadius.full),
         boxShadow: [
           BoxShadow(
-            color: AppColors.shadowDark,
+            color: Colors.black.withOpacity(0.2),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
         ],
         border: Border.all(
-          color: AppColors.border,
+          color: theme.dividerColor,
           width: 1,
         ),
       ),

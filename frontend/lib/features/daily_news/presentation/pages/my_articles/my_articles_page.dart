@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:news_app_clean_architecture/config/theme/app_colors.dart';
 import 'package:news_app_clean_architecture/config/theme/app_spacing.dart';
 import 'package:news_app_clean_architecture/config/theme/app_typography.dart';
 import 'package:news_app_clean_architecture/config/theme/app_radius.dart';
@@ -11,6 +10,7 @@ import 'package:news_app_clean_architecture/features/auth/presentation/bloc/auth
 import 'package:news_app_clean_architecture/features/daily_news/domain/entities/article.dart';
 import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/my_articles/my_articles_cubit.dart';
 import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/my_articles/my_articles_state.dart';
+import 'package:news_app_clean_architecture/config/theme/theme_cubit.dart';
 import 'package:news_app_clean_architecture/shared/widgets/widgets.dart';
 
 /// My Articles page showing user's created articles.
@@ -40,37 +40,46 @@ class _MyArticlesPageState extends State<MyArticlesPage> {
 
   @override
   Widget build(BuildContext context) {
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.light,
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        body: BlocConsumer<MyArticlesCubit, MyArticlesState>(
-          listener: _handleStateChanges,
-          builder: (context, state) {
-            return CustomScrollView(
-              physics: const BouncingScrollPhysics(),
-              slivers: [
-                _buildAppBar(context),
-                _buildContent(state),
-              ],
-            );
-          },
-        ),
-        floatingActionButton: AnimatedFAB(
-          icon: Icons.add_rounded,
-          label: 'New Article',
-          onPressed: _onCreateArticle,
-        ),
-      ),
+    return BlocBuilder<ThemeCubit, AppThemeMode>(
+      builder: (context, themeMode) {
+        final isDark = themeMode == AppThemeMode.dark;
+        final theme = Theme.of(context);
+
+        return AnnotatedRegion<SystemUiOverlayStyle>(
+          value:
+              isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+          child: Scaffold(
+            backgroundColor: theme.scaffoldBackgroundColor,
+            body: BlocConsumer<MyArticlesCubit, MyArticlesState>(
+              listener: _handleStateChanges,
+              builder: (context, state) {
+                return CustomScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  slivers: [
+                    _buildAppBar(context),
+                    _buildContent(state),
+                  ],
+                );
+              },
+            ),
+            floatingActionButton: AnimatedFAB(
+              icon: Icons.add_rounded,
+              label: 'New Article',
+              onPressed: _onCreateArticle,
+            ),
+          ),
+        );
+      },
     );
   }
 
   void _handleStateChanges(BuildContext context, MyArticlesState state) {
+    final theme = Theme.of(context);
     if (state is MyArticleDeleted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(state.message),
-          backgroundColor: AppColors.success,
+          backgroundColor: Colors.green, // Or theme extension success color
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -78,7 +87,7 @@ class _MyArticlesPageState extends State<MyArticlesPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(state.message),
-          backgroundColor: AppColors.error,
+          backgroundColor: theme.colorScheme.error,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -86,11 +95,12 @@ class _MyArticlesPageState extends State<MyArticlesPage> {
   }
 
   Widget _buildAppBar(BuildContext context) {
+    final theme = Theme.of(context);
     return SliverAppBar(
       expandedHeight: 100,
       pinned: true,
       automaticallyImplyLeading: false,
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       surfaceTintColor: Colors.transparent,
       flexibleSpace: FlexibleSpaceBar(
         titlePadding: EdgeInsets.only(
@@ -99,7 +109,10 @@ class _MyArticlesPageState extends State<MyArticlesPage> {
         ),
         title: Text(
           'My Articles',
-          style: AppTypography.headlineLarge.copyWith(fontSize: 24),
+          style: AppTypography.headlineLarge.copyWith(
+            fontSize: 24,
+            color: theme.colorScheme.onSurface,
+          ),
         ),
         background: Container(
           decoration: BoxDecoration(
@@ -107,8 +120,8 @@ class _MyArticlesPageState extends State<MyArticlesPage> {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                AppColors.background,
-                AppColors.background.withValues(alpha: 0.8),
+                theme.scaffoldBackgroundColor,
+                theme.scaffoldBackgroundColor.withValues(alpha: 0.8),
               ],
             ),
           ),
@@ -157,7 +170,8 @@ class _MyArticlesPageState extends State<MyArticlesPage> {
           child: EmptyStateWidget(
             icon: Icons.edit_note_rounded,
             title: 'No Articles Yet',
-            message: 'Start sharing your stories with the world.\nYour published articles will appear here.',
+            message:
+                'Start sharing your stories with the world.\nYour published articles will appear here.',
             actionLabel: 'Write Your First Article',
             onAction: _onCreateArticle,
           ),
@@ -180,10 +194,11 @@ class _MyArticlesPageState extends State<MyArticlesPage> {
   }
 
   Widget _buildStatsCard(List<ArticleEntity> articles) {
-    final totalReactions = articles.fold<int>(
-      0, (sum, article) => sum + article.totalReactions);
-    final avgReactions = articles.isEmpty 
-        ? '0' 
+    final theme = Theme.of(context);
+    final totalReactions =
+        articles.fold<int>(0, (sum, article) => sum + article.totalReactions);
+    final avgReactions = articles.isEmpty
+        ? '0'
         : (totalReactions / articles.length).toStringAsFixed(1);
 
     return Container(
@@ -194,31 +209,43 @@ class _MyArticlesPageState extends State<MyArticlesPage> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppColors.accent.withValues(alpha: 0.15),
-            AppColors.accent.withValues(alpha: 0.05),
+            theme.colorScheme.primary.withValues(alpha: 0.15),
+            theme.colorScheme.primary.withValues(alpha: 0.05),
           ],
         ),
         borderRadius: BorderRadius.circular(AppRadius.xl),
         border: Border.all(
-          color: AppColors.accent.withValues(alpha: 0.2),
+          color: theme.colorScheme.primary.withValues(alpha: 0.2),
           width: 1,
         ),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _StatItem(value: articles.length.toString(), label: 'Published', icon: Icons.article_outlined),
+          _StatItem(
+              value: articles.length.toString(),
+              label: 'Published',
+              icon: Icons.article_outlined),
           _buildDivider(),
-          _StatItem(value: totalReactions.toString(), label: 'Reactions', icon: Icons.favorite_outline),
+          _StatItem(
+              value: totalReactions.toString(),
+              label: 'Reactions',
+              icon: Icons.favorite_outline),
           _buildDivider(),
-          _StatItem(value: avgReactions, label: 'Avg. per article', icon: Icons.trending_up_rounded),
+          _StatItem(
+              value: avgReactions,
+              label: 'Avg. per article',
+              icon: Icons.trending_up_rounded),
         ],
       ),
     ).animate().fadeIn(duration: 400.ms, delay: 100.ms);
   }
 
   Widget _buildDivider() {
-    return Container(width: 1, height: 40, color: AppColors.accent.withValues(alpha: 0.2));
+    return Container(
+        width: 1,
+        height: 40,
+        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2));
   }
 
   Widget _buildArticleItem(ArticleEntity article, int index) {
@@ -236,29 +263,33 @@ class _MyArticlesPageState extends State<MyArticlesPage> {
           onDelete: () => _onDeleteArticle(article),
         ),
       ),
-    ).animate().fadeIn(duration: 400.ms, delay: Duration(milliseconds: 100 + (index * 50)));
+    ).animate().fadeIn(
+        duration: 400.ms, delay: Duration(milliseconds: 100 + (index * 50)));
   }
 
   Widget _buildDismissBackground() {
+    final theme = Theme.of(context);
     return Container(
       alignment: Alignment.centerRight,
       padding: EdgeInsets.only(right: AppSpacing.lg),
       decoration: BoxDecoration(
-        color: AppColors.error.withValues(alpha: 0.1),
+        color: theme.colorScheme.error.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
-      child: Icon(Icons.delete_outline_rounded, color: AppColors.error, size: 28),
+      child: Icon(Icons.delete_outline_rounded,
+          color: theme.colorScheme.error, size: 28),
     );
   }
 
   Future<bool> _confirmDelete(ArticleEntity article) async {
     HapticService.warning();
-    
+
     final result = await showDialog<bool>(
       context: context,
       builder: (ctx) => ConfirmationModal(
         title: 'Delete Article',
-        message: 'Are you sure you want to delete "${article.title}"?\n\nThis action cannot be undone.',
+        message:
+            'Are you sure you want to delete "${article.title}"?\n\nThis action cannot be undone.',
         confirmLabel: 'Delete',
         isDanger: true,
         onConfirm: () => Navigator.pop(ctx, true),
@@ -280,7 +311,8 @@ class _MyArticlesPageState extends State<MyArticlesPage> {
 
   void _onEditArticle(ArticleEntity article) {
     HapticService.lightImpact();
-    Navigator.pushNamed(context, '/edit-article', arguments: article).then((result) {
+    Navigator.pushNamed(context, '/edit-article', arguments: article)
+        .then((result) {
       // Refresh list if article was updated
       if (result != null && result is ArticleEntity) {
         _loadArticlesIfNeeded();
@@ -301,16 +333,22 @@ class _StatItem extends StatelessWidget {
   final String label;
   final IconData icon;
 
-  const _StatItem({required this.value, required this.label, required this.icon});
+  const _StatItem(
+      {required this.value, required this.label, required this.icon});
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Column(
       children: [
-        Icon(icon, color: AppColors.accent, size: 20),
+        Icon(icon, color: theme.colorScheme.primary, size: 20),
         SizedBox(height: AppSpacing.xs),
-        Text(value, style: AppTypography.titleLarge.copyWith(color: AppColors.textPrimary)),
-        Text(label, style: AppTypography.labelSmall.copyWith(color: AppColors.textMuted)),
+        Text(value,
+            style: AppTypography.titleLarge
+                .copyWith(color: theme.colorScheme.onSurface)),
+        Text(label,
+            style: AppTypography.labelSmall
+                .copyWith(color: theme.colorScheme.onSurface.withOpacity(0.5))),
       ],
     );
   }
@@ -322,67 +360,86 @@ class _ArticleListItem extends StatelessWidget {
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
 
-  const _ArticleListItem({required this.article, this.onTap, this.onEdit, this.onDelete});
+  const _ArticleListItem(
+      {required this.article, this.onTap, this.onEdit, this.onDelete});
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: theme.cardColor,
           borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(color: AppColors.border, width: 1),
+          border: Border.all(color: theme.dividerColor, width: 1),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildThumbnail(),
+            _buildThumbnail(theme),
             SizedBox(width: AppSpacing.md),
-            Expanded(child: _buildContent()),
-            _buildActionsMenu(),
+            Expanded(child: _buildContent(theme)),
+            _buildActionsMenu(theme),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildThumbnail() {
+  Widget _buildThumbnail(ThemeData theme) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(AppRadius.md),
       child: Container(
         width: 80,
         height: 80,
-        color: AppColors.surfaceLight,
+        color: theme.colorScheme.surfaceContainerHighest,
         child: article.urlToImage?.isNotEmpty == true
-            ? Image.network(article.urlToImage!, fit: BoxFit.cover, errorBuilder: (_, __, ___) => _placeholder())
-            : _placeholder(),
+            ? Image.network(article.urlToImage!,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => _placeholder(theme))
+            : _placeholder(theme),
       ),
     );
   }
 
-  Widget _placeholder() => Center(child: Icon(Icons.image_outlined, color: AppColors.textMuted, size: 32));
+  Widget _placeholder(ThemeData theme) => Center(
+      child: Icon(Icons.image_outlined,
+          color: theme.colorScheme.onSurface.withOpacity(0.5), size: 32));
 
-  Widget _buildContent() {
+  Widget _buildContent(ThemeData theme) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(article.title ?? 'Untitled', style: AppTypography.titleSmall, maxLines: 2, overflow: TextOverflow.ellipsis),
+        Text(article.title ?? 'Untitled',
+            style: AppTypography.titleSmall
+                .copyWith(color: theme.colorScheme.onSurface),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis),
         SizedBox(height: AppSpacing.xs),
-        Text(_formatDate(article.publishedAt), style: AppTypography.bodySmall.copyWith(color: AppColors.textMuted)),
+        Text(_formatDate(article.publishedAt),
+            style: AppTypography.bodySmall
+                .copyWith(color: theme.colorScheme.onSurface.withOpacity(0.5))),
         SizedBox(height: AppSpacing.sm),
         Row(
           children: [
-            _MetricChip(icon: Icons.favorite_outline, value: article.totalReactions.toString()),
+            _MetricChip(
+                icon: Icons.favorite_outline,
+                value: article.totalReactions.toString()),
             SizedBox(width: AppSpacing.sm),
             Container(
-              padding: EdgeInsets.symmetric(horizontal: AppSpacing.xs, vertical: 2),
+              padding:
+                  EdgeInsets.symmetric(horizontal: AppSpacing.xs, vertical: 2),
               decoration: BoxDecoration(
-                color: AppColors.success.withValues(alpha: 0.15),
+                color: Colors.green.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(AppRadius.xs),
               ),
-              child: Text('PUBLISHED', style: AppTypography.labelSmall.copyWith(color: AppColors.success, fontWeight: FontWeight.w600, fontSize: 9)),
+              child: Text('PUBLISHED',
+                  style: AppTypography.labelSmall.copyWith(
+                      color: Colors.green,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 9)),
             ),
           ],
         ),
@@ -390,26 +447,38 @@ class _ArticleListItem extends StatelessWidget {
     );
   }
 
-  Widget _buildActionsMenu() {
+  Widget _buildActionsMenu(ThemeData theme) {
     return PopupMenuButton<String>(
-      icon: Icon(Icons.more_vert_rounded, color: AppColors.textMuted, size: 20),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
-      color: AppColors.surface,
+      icon: Icon(Icons.more_vert_rounded,
+          color: theme.colorScheme.onSurface.withOpacity(0.5), size: 20),
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md)),
+      color: theme.cardColor,
       onSelected: (value) {
         if (value == 'edit') onEdit?.call();
         if (value == 'delete') onDelete?.call();
       },
       itemBuilder: (_) => [
-        PopupMenuItem(value: 'edit', child: Row(children: [
-          Icon(Icons.edit_outlined, size: 18, color: AppColors.textSecondary),
-          SizedBox(width: AppSpacing.sm),
-          Text('Edit', style: AppTypography.bodyMedium),
-        ])),
-        PopupMenuItem(value: 'delete', child: Row(children: [
-          Icon(Icons.delete_outline, size: 18, color: AppColors.error),
-          SizedBox(width: AppSpacing.sm),
-          Text('Delete', style: AppTypography.bodyMedium.copyWith(color: AppColors.error)),
-        ])),
+        PopupMenuItem(
+            value: 'edit',
+            child: Row(children: [
+              Icon(Icons.edit_outlined,
+                  size: 18, color: theme.colorScheme.onSurfaceVariant),
+              SizedBox(width: AppSpacing.sm),
+              Text('Edit',
+                  style: AppTypography.bodyMedium
+                      .copyWith(color: theme.colorScheme.onSurface)),
+            ])),
+        PopupMenuItem(
+            value: 'delete',
+            child: Row(children: [
+              Icon(Icons.delete_outline,
+                  size: 18, color: theme.colorScheme.error),
+              SizedBox(width: AppSpacing.sm),
+              Text('Delete',
+                  style: AppTypography.bodyMedium
+                      .copyWith(color: theme.colorScheme.error)),
+            ])),
       ],
     );
   }
@@ -422,7 +491,20 @@ class _ArticleListItem extends StatelessWidget {
       if (diff.inDays == 0) return 'Today';
       if (diff.inDays == 1) return 'Yesterday';
       if (diff.inDays < 7) return '${diff.inDays} days ago';
-      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec'
+      ];
       return '${months[date.month - 1]} ${date.day}, ${date.year}';
     } catch (_) {
       return dateStr;
@@ -438,12 +520,16 @@ class _MetricChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 14, color: AppColors.textMuted),
+        Icon(icon,
+            size: 14, color: theme.colorScheme.onSurface.withOpacity(0.5)),
         SizedBox(width: AppSpacing.xxs),
-        Text(value, style: AppTypography.labelSmall.copyWith(color: AppColors.textMuted)),
+        Text(value,
+            style: AppTypography.labelSmall
+                .copyWith(color: theme.colorScheme.onSurface.withOpacity(0.5))),
       ],
     );
   }

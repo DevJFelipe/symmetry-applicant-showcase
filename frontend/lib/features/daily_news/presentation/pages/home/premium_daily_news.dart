@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
-import 'package:news_app_clean_architecture/config/theme/app_colors.dart';
 import 'package:news_app_clean_architecture/config/theme/app_spacing.dart';
 import 'package:news_app_clean_architecture/config/theme/app_typography.dart';
 import 'package:news_app_clean_architecture/config/theme/app_radius.dart';
@@ -13,6 +12,7 @@ import 'package:news_app_clean_architecture/features/daily_news/presentation/blo
 import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article/remote/remote_article_event.dart';
 import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article/remote/remote_article_state.dart';
 import 'package:news_app_clean_architecture/features/daily_news/presentation/widgets/bento_article_grid.dart';
+import 'package:news_app_clean_architecture/config/theme/theme_cubit.dart';
 import 'package:news_app_clean_architecture/shared/widgets/widgets.dart';
 
 /// Premium redesigned Daily News feed with Bento Grid layout.
@@ -67,7 +67,7 @@ class _PremiumDailyNewsState extends State<PremiumDailyNews>
   Future<void> _onRefresh() async {
     HapticService.lightImpact();
     context.read<RemoteArticlesBloc>().add(const GetArticles());
-    
+
     // Wait for state change
     await Future.delayed(const Duration(milliseconds: 1000));
     _refreshController.refreshCompleted();
@@ -75,24 +75,32 @@ class _PremiumDailyNewsState extends State<PremiumDailyNews>
 
   @override
   Widget build(BuildContext context) {
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.light,
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        body: BlocBuilder<RemoteArticlesBloc, RemoteArticlesState>(
-          builder: (context, state) {
-            return Stack(
-              children: [
-                // Main content
-                _buildContent(context, state),
-                
-                // FAB
-                _buildFab(context),
-              ],
-            );
-          },
-        ),
-      ),
+    return BlocBuilder<ThemeCubit, AppThemeMode>(
+      builder: (context, themeMode) {
+        final isDark = themeMode == AppThemeMode.dark;
+        final theme = Theme.of(context);
+
+        return AnnotatedRegion<SystemUiOverlayStyle>(
+          value:
+              isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+          child: Scaffold(
+            backgroundColor: theme.scaffoldBackgroundColor,
+            body: BlocBuilder<RemoteArticlesBloc, RemoteArticlesState>(
+              builder: (context, state) {
+                return Stack(
+                  children: [
+                    // Main content
+                    _buildContent(context, state),
+
+                    // FAB
+                    _buildFab(context),
+                  ],
+                );
+              },
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -107,19 +115,19 @@ class _PremiumDailyNewsState extends State<PremiumDailyNews>
         slivers: [
           // Premium App Bar
           _buildSliverAppBar(context),
-          
+
           // Content based on state
           ...switch (state) {
             RemoteArticlesLoading() => [_buildLoadingState()],
             RemoteArticlesError(error: final e) => [
-              _buildErrorState(e?.message ?? 'An error occurred')
-            ],
+                _buildErrorState(e?.message ?? 'An error occurred')
+              ],
             RemoteArticlesEmpty() => [_buildEmptyState()],
             RemoteArticlesDone(articles: final articles) => [
-              _buildArticlesContent(context, articles ?? [])
-            ],
+                _buildArticlesContent(context, articles ?? [])
+              ],
           },
-          
+
           // Bottom spacing
           SliverPadding(
             padding: EdgeInsets.only(bottom: AppSpacing.xxxl),
@@ -132,12 +140,13 @@ class _PremiumDailyNewsState extends State<PremiumDailyNews>
   Widget _buildRefreshHeader() {
     return CustomHeader(
       builder: (context, mode) {
+        final theme = Theme.of(context);
         Widget body;
         if (mode == RefreshStatus.idle) {
           body = Text(
             'Pull to refresh',
             style: AppTypography.bodySmall.copyWith(
-              color: AppColors.textMuted,
+              color: theme.colorScheme.onSurface.withOpacity(0.5),
             ),
           );
         } else if (mode == RefreshStatus.refreshing) {
@@ -146,14 +155,14 @@ class _PremiumDailyNewsState extends State<PremiumDailyNews>
             height: 24,
             child: CircularProgressIndicator(
               strokeWidth: 2,
-              color: AppColors.accent,
+              color: theme.colorScheme.secondary,
             ),
           );
         } else if (mode == RefreshStatus.canRefresh) {
           body = Text(
             'Release to refresh',
             style: AppTypography.bodySmall.copyWith(
-              color: AppColors.accent,
+              color: theme.colorScheme.secondary,
             ),
           );
         } else if (mode == RefreshStatus.completed) {
@@ -163,13 +172,14 @@ class _PremiumDailyNewsState extends State<PremiumDailyNews>
               Icon(
                 Icons.check_circle_outline,
                 size: 18,
-                color: AppColors.success,
+                color: Colors
+                    .green, // Fixed success color or use theme extension if available
               ),
               SizedBox(width: AppSpacing.xs),
               Text(
                 'Updated',
                 style: AppTypography.bodySmall.copyWith(
-                  color: AppColors.success,
+                  color: Colors.green,
                 ),
               ),
             ],
@@ -187,12 +197,13 @@ class _PremiumDailyNewsState extends State<PremiumDailyNews>
   }
 
   Widget _buildSliverAppBar(BuildContext context) {
+    final theme = Theme.of(context);
     return SliverAppBar(
       expandedHeight: 120,
       floating: true,
       pinned: true,
       snap: true,
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       surfaceTintColor: Colors.transparent,
       flexibleSpace: FlexibleSpaceBar(
         titlePadding: EdgeInsets.only(
@@ -207,6 +218,7 @@ class _PremiumDailyNewsState extends State<PremiumDailyNews>
               'Daily News',
               style: AppTypography.headlineLarge.copyWith(
                 fontSize: 24,
+                color: theme.colorScheme.onSurface,
               ),
             ),
           ],
@@ -217,8 +229,8 @@ class _PremiumDailyNewsState extends State<PremiumDailyNews>
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                AppColors.background,
-                AppColors.background.withValues(alpha: 0.8),
+                theme.scaffoldBackgroundColor,
+                theme.scaffoldBackgroundColor.withValues(alpha: 0.8),
               ],
             ),
           ),
@@ -230,7 +242,7 @@ class _PremiumDailyNewsState extends State<PremiumDailyNews>
           onPressed: () => _onSearchTapped(context),
           icon: Icon(
             Icons.search_rounded,
-            color: AppColors.textPrimary,
+            color: theme.colorScheme.onSurface,
           ),
         ),
         // Saved articles
@@ -238,7 +250,7 @@ class _PremiumDailyNewsState extends State<PremiumDailyNews>
           onPressed: () => _onSavedArticlesTapped(context),
           icon: Icon(
             Icons.bookmark_border_rounded,
-            color: AppColors.textPrimary,
+            color: theme.colorScheme.onSurface,
           ),
         ),
         // Profile/Menu
@@ -249,17 +261,19 @@ class _PremiumDailyNewsState extends State<PremiumDailyNews>
   }
 
   Widget _buildProfileMenu(BuildContext context) {
+    final theme = Theme.of(context);
+
     return BlocBuilder<AuthCubit, AuthState>(
       builder: (context, state) {
         final userName = state.user?.displayName ?? 'User';
         final initial = userName.isNotEmpty ? userName[0].toUpperCase() : 'U';
-        
+
         return PopupMenuButton<String>(
           offset: Offset(0, AppSpacing.xl),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.lg),
           ),
-          color: AppColors.surface,
+          color: theme.cardColor,
           onSelected: (value) => _onMenuSelected(context, value),
           itemBuilder: (context) => [
             PopupMenuItem(
@@ -269,12 +283,13 @@ class _PremiumDailyNewsState extends State<PremiumDailyNews>
                 children: [
                   Text(
                     userName,
-                    style: AppTypography.titleSmall,
+                    style: AppTypography.titleSmall
+                        .copyWith(color: theme.colorScheme.onSurface),
                   ),
                   Text(
                     state.user?.email ?? '',
                     style: AppTypography.bodySmall.copyWith(
-                      color: AppColors.textMuted,
+                      color: theme.colorScheme.onSurface.withOpacity(0.5),
                     ),
                   ),
                 ],
@@ -285,9 +300,12 @@ class _PremiumDailyNewsState extends State<PremiumDailyNews>
               value: 'profile',
               child: Row(
                 children: [
-                  Icon(Icons.person_outline, color: AppColors.textSecondary),
+                  Icon(Icons.person_outline,
+                      color: theme.colorScheme.onSurfaceVariant),
                   SizedBox(width: AppSpacing.sm),
-                  Text('Profile', style: AppTypography.bodyMedium),
+                  Text('Profile',
+                      style: AppTypography.bodyMedium
+                          .copyWith(color: theme.colorScheme.onSurface)),
                 ],
               ),
             ),
@@ -295,9 +313,12 @@ class _PremiumDailyNewsState extends State<PremiumDailyNews>
               value: 'my_articles',
               child: Row(
                 children: [
-                  Icon(Icons.article_outlined, color: AppColors.textSecondary),
+                  Icon(Icons.article_outlined,
+                      color: theme.colorScheme.onSurfaceVariant),
                   SizedBox(width: AppSpacing.sm),
-                  Text('My Articles', style: AppTypography.bodyMedium),
+                  Text('My Articles',
+                      style: AppTypography.bodyMedium
+                          .copyWith(color: theme.colorScheme.onSurface)),
                 ],
               ),
             ),
@@ -306,12 +327,12 @@ class _PremiumDailyNewsState extends State<PremiumDailyNews>
               value: 'logout',
               child: Row(
                 children: [
-                  Icon(Icons.logout, color: AppColors.error),
+                  Icon(Icons.logout, color: theme.colorScheme.error),
                   SizedBox(width: AppSpacing.sm),
                   Text(
                     'Sign Out',
                     style: AppTypography.bodyMedium.copyWith(
-                      color: AppColors.error,
+                      color: theme.colorScheme.error,
                     ),
                   ),
                 ],
@@ -322,11 +343,11 @@ class _PremiumDailyNewsState extends State<PremiumDailyNews>
             padding: EdgeInsets.all(AppSpacing.xs),
             child: CircleAvatar(
               radius: 16,
-              backgroundColor: AppColors.accent,
+              backgroundColor: theme.colorScheme.primary,
               child: Text(
                 initial,
                 style: AppTypography.labelMedium.copyWith(
-                  color: Colors.white,
+                  color: theme.colorScheme.onPrimary,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -390,6 +411,9 @@ class _PremiumDailyNewsState extends State<PremiumDailyNews>
   }
 
   Widget _buildFab(BuildContext context) {
+    // Only show create article button if user is authenticated?
+    // Following existing logic which doesn't check auth in _buildFab but _onCreateArticle might
+
     return Positioned(
       right: AppSpacing.screenPaddingH,
       bottom: AppSpacing.xl,
@@ -447,7 +471,8 @@ class _PremiumDailyNewsState extends State<PremiumDailyNews>
   void _onArticleTapped(BuildContext context, ArticleEntity article) {
     HapticService.lightImpact();
     final bloc = context.read<RemoteArticlesBloc>();
-    Navigator.pushNamed(context, '/ArticleDetails', arguments: article).then((_) {
+    Navigator.pushNamed(context, '/ArticleDetails', arguments: article)
+        .then((_) {
       // Refresh feed when returning from article detail (in case reactions changed)
       bloc.add(const GetArticles());
     });

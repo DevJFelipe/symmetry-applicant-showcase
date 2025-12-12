@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:news_app_clean_architecture/config/theme/app_colors.dart';
 import 'package:news_app_clean_architecture/config/theme/app_spacing.dart';
 import 'package:news_app_clean_architecture/config/theme/app_typography.dart';
 import 'package:news_app_clean_architecture/config/theme/app_radius.dart';
@@ -13,6 +12,7 @@ import 'package:news_app_clean_architecture/features/daily_news/presentation/blo
 import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article/local/local_article_event.dart';
 import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article/local/local_article_state.dart';
 import 'package:news_app_clean_architecture/injection_container.dart';
+import 'package:news_app_clean_architecture/config/theme/theme_cubit.dart';
 import 'package:news_app_clean_architecture/shared/widgets/widgets.dart';
 
 /// Premium Saved Articles page with immersive dark theme.
@@ -35,29 +35,38 @@ class _SavedArticlesState extends State<SavedArticles> {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => sl<LocalArticleBloc>()..add(const GetSavedArticles()),
-      child: AnnotatedRegion<SystemUiOverlayStyle>(
-        value: SystemUiOverlayStyle.light,
-        child: Scaffold(
-          backgroundColor: AppColors.background,
-          body: CustomScrollView(
-            slivers: [
-              _buildAppBar(),
-              _buildBody(),
-            ],
-          ),
-        ),
+      child: BlocBuilder<ThemeCubit, AppThemeMode>(
+        builder: (context, themeMode) {
+          final isDark = themeMode == AppThemeMode.dark;
+          final theme = Theme.of(context);
+
+          return AnnotatedRegion<SystemUiOverlayStyle>(
+            value:
+                isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+            child: Scaffold(
+              backgroundColor: theme.scaffoldBackgroundColor,
+              body: CustomScrollView(
+                slivers: [
+                  _buildAppBar(context),
+                  _buildBody(),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildAppBar() {
+  Widget _buildAppBar(BuildContext context) {
+    final theme = Theme.of(context);
     return SliverAppBar(
       expandedHeight: 120,
       floating: true,
       pinned: true,
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       surfaceTintColor: Colors.transparent,
-      leading: _buildBackButton(),
+      leading: _buildBackButton(context),
       flexibleSpace: FlexibleSpaceBar(
         titlePadding: const EdgeInsets.only(
           left: 56,
@@ -66,7 +75,7 @@ class _SavedArticlesState extends State<SavedArticles> {
         title: Text(
           'Saved Articles',
           style: AppTypography.headlineSmall.copyWith(
-            color: AppColors.textPrimary,
+            color: theme.colorScheme.onSurface,
           ),
         ),
         background: Container(
@@ -75,8 +84,8 @@ class _SavedArticlesState extends State<SavedArticles> {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                AppColors.primaryDark.withValues(alpha: 0.3),
-                AppColors.background,
+                theme.colorScheme.primary.withValues(alpha: 0.1),
+                theme.scaffoldBackgroundColor,
               ],
             ),
           ),
@@ -85,7 +94,8 @@ class _SavedArticlesState extends State<SavedArticles> {
     );
   }
 
-  Widget _buildBackButton() {
+  Widget _buildBackButton(BuildContext context) {
+    final theme = Theme.of(context);
     return GestureDetector(
       onTap: () {
         HapticService.lightImpact();
@@ -94,12 +104,12 @@ class _SavedArticlesState extends State<SavedArticles> {
       child: Container(
         margin: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: AppColors.surfaceLight,
+          color: theme.colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(AppRadius.md),
         ),
         child: Icon(
           Icons.arrow_back_ios_new_rounded,
-          color: AppColors.textPrimary,
+          color: theme.colorScheme.onSurface,
           size: 20,
         ),
       ),
@@ -157,21 +167,23 @@ class _SavedArticlesState extends State<SavedArticles> {
   void _onRemoveArticle(BuildContext context, ArticleEntity article) {
     HapticService.warning();
     BlocProvider.of<LocalArticleBloc>(context).add(RemoveArticle(article));
+    final theme = Theme.of(context);
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
           'Article removed',
-          style: AppTypography.bodyMedium.copyWith(color: Colors.white),
+          style: AppTypography.bodyMedium
+              .copyWith(color: theme.colorScheme.onInverseSurface),
         ),
-        backgroundColor: AppColors.surfaceLight,
+        backgroundColor: theme.colorScheme.inverseSurface,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.md),
         ),
         action: SnackBarAction(
           label: 'Undo',
-          textColor: AppColors.accent,
+          textColor: theme.colorScheme.inversePrimary,
           onPressed: () {
             context.read<LocalArticleBloc>().add(SaveArticle(article));
           },
@@ -202,25 +214,26 @@ class _SavedArticleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Dismissible(
       key: Key(article.url ?? article.title ?? index.toString()),
       direction: DismissDirection.endToStart,
       onDismissed: (_) => onRemove(),
-      background: _buildDismissBackground(),
+      background: _buildDismissBackground(context),
       child: GestureDetector(
         onTap: onTap,
         child: Container(
           margin: const EdgeInsets.only(bottom: AppSpacing.md),
           decoration: BoxDecoration(
-            color: AppColors.surface,
+            color: theme.cardColor,
             borderRadius: BorderRadius.circular(AppRadius.lg),
             border: Border.all(
-              color: AppColors.surfaceLight,
+              color: theme.dividerColor,
               width: 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: AppColors.shadowDark,
+                color: Colors.black.withOpacity(0.05),
                 blurRadius: 8,
                 offset: const Offset(0, 4),
               ),
@@ -229,7 +242,7 @@ class _SavedArticleCard extends StatelessWidget {
           child: Row(
             children: [
               // Image
-              _buildImage(),
+              _buildImage(context),
 
               // Content
               Expanded(
@@ -239,7 +252,7 @@ class _SavedArticleCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Source tag
-                      _buildSourceTag(),
+                      _buildSourceTag(context),
                       const SizedBox(height: AppSpacing.xs),
 
                       // Title
@@ -248,20 +261,20 @@ class _SavedArticleCard extends StatelessWidget {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: AppTypography.titleMedium.copyWith(
-                          color: AppColors.textPrimary,
+                          color: theme.colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(height: AppSpacing.xs),
 
                       // Date
-                      _buildMetaRow(),
+                      _buildMetaRow(context),
                     ],
                   ),
                 ),
               ),
 
               // Remove button
-              _buildRemoveButton(),
+              _buildRemoveButton(context),
             ],
           ),
         ),
@@ -272,8 +285,9 @@ class _SavedArticleCard extends StatelessWidget {
         .slideX(begin: 0.1, end: 0, duration: 300.ms, curve: Curves.easeOut);
   }
 
-  Widget _buildImage() {
+  Widget _buildImage(BuildContext context) {
     final imageUrl = article.urlToImage;
+    final theme = Theme.of(context);
 
     return ClipRRect(
       borderRadius: const BorderRadius.only(
@@ -288,25 +302,25 @@ class _SavedArticleCard extends StatelessWidget {
                 imageUrl: imageUrl,
                 fit: BoxFit.cover,
                 placeholder: (_, __) => Container(
-                  color: AppColors.surfaceLight,
+                  color: theme.colorScheme.surfaceContainerHighest,
                   child: const Center(
                     child: PremiumSpinner(size: 20),
                   ),
                 ),
                 errorWidget: (_, __, ___) => Container(
-                  color: AppColors.surfaceLight,
+                  color: theme.colorScheme.surfaceContainerHighest,
                   child: Icon(
                     Icons.image_not_supported_outlined,
-                    color: AppColors.textMuted,
+                    color: theme.colorScheme.onSurface.withOpacity(0.4),
                     size: 24,
                   ),
                 ),
               )
             : Container(
-                color: AppColors.surfaceLight,
+                color: theme.colorScheme.surfaceContainerHighest,
                 child: Icon(
                   Icons.article_outlined,
-                  color: AppColors.textMuted,
+                  color: theme.colorScheme.onSurface.withOpacity(0.4),
                   size: 32,
                 ),
               ),
@@ -314,8 +328,9 @@ class _SavedArticleCard extends StatelessWidget {
     );
   }
 
-  Widget _buildSourceTag() {
+  Widget _buildSourceTag(BuildContext context) {
     final source = article.source?.name ?? 'News';
+    final theme = Theme.of(context);
 
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -323,13 +338,13 @@ class _SavedArticleCard extends StatelessWidget {
         vertical: 2,
       ),
       decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.2),
+        color: theme.colorScheme.primary.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(AppRadius.xs),
       ),
       child: Text(
         source,
         style: AppTypography.labelSmall.copyWith(
-          color: AppColors.primary,
+          color: theme.colorScheme.primary,
           fontWeight: FontWeight.w600,
         ),
         maxLines: 1,
@@ -338,20 +353,21 @@ class _SavedArticleCard extends StatelessWidget {
     );
   }
 
-  Widget _buildMetaRow() {
+  Widget _buildMetaRow(BuildContext context) {
+    final theme = Theme.of(context);
     return Row(
       children: [
         Icon(
           Icons.access_time_rounded,
           size: 14,
-          color: AppColors.textMuted,
+          color: theme.colorScheme.onSurface.withOpacity(0.5),
         ),
         const SizedBox(width: 4),
         Expanded(
           child: Text(
             _formatDate(article.publishedAt),
             style: AppTypography.caption.copyWith(
-              color: AppColors.textMuted,
+              color: theme.colorScheme.onSurface.withOpacity(0.5),
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -361,7 +377,8 @@ class _SavedArticleCard extends StatelessWidget {
     );
   }
 
-  Widget _buildRemoveButton() {
+  Widget _buildRemoveButton(BuildContext context) {
+    final theme = Theme.of(context);
     return GestureDetector(
       onTap: onRemove,
       behavior: HitTestBehavior.opaque,
@@ -369,25 +386,26 @@ class _SavedArticleCard extends StatelessWidget {
         padding: const EdgeInsets.all(AppSpacing.md),
         child: Icon(
           Icons.bookmark_remove_outlined,
-          color: AppColors.error,
+          color: theme.colorScheme.error,
           size: 24,
         ),
       ),
     );
   }
 
-  Widget _buildDismissBackground() {
+  Widget _buildDismissBackground(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.error.withValues(alpha: 0.2),
+        color: theme.colorScheme.error.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       alignment: Alignment.centerRight,
       padding: const EdgeInsets.only(right: AppSpacing.lg),
       child: Icon(
         Icons.delete_outline_rounded,
-        color: AppColors.error,
+        color: theme.colorScheme.error,
         size: 28,
       ),
     );
@@ -410,8 +428,18 @@ class _SavedArticleCard extends StatelessWidget {
         return '${diff.inDays}d ago';
       } else {
         final months = [
-          'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-          'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+          'Jan',
+          'Feb',
+          'Mar',
+          'Apr',
+          'May',
+          'Jun',
+          'Jul',
+          'Aug',
+          'Sep',
+          'Oct',
+          'Nov',
+          'Dec'
         ];
         return '${months[date.month - 1]} ${date.day}, ${date.year}';
       }

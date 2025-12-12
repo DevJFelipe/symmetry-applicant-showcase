@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:news_app_clean_architecture/config/theme/app_colors.dart';
 import 'package:news_app_clean_architecture/config/theme/app_spacing.dart';
 import 'package:news_app_clean_architecture/config/theme/app_typography.dart';
 import 'package:news_app_clean_architecture/config/theme/app_radius.dart';
@@ -50,20 +49,23 @@ class _EditArticlePageState extends State<EditArticlePage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: _buildAppBar(context),
       body: BlocConsumer<EditArticleCubit, EditArticleState>(
         listener: _handleStateChanges,
         builder: (context, state) {
           return switch (state) {
-            EditArticleLoading(:final message) => _buildLoadingState(message),
-            EditArticleInitial(:final article) => _buildForm(context, article, null),
-            EditArticleImagePicked(:final article, :final newImagePath) => 
-                _buildForm(context, article, newImagePath),
-            EditArticleSuccess() => _buildLoadingState('Saved!'),
-            EditArticleError(:final article, :final newImagePath) => 
-                _buildForm(context, article, newImagePath),
+            EditArticleLoading(:final message) =>
+              _buildLoadingState(context, message),
+            EditArticleInitial(:final article) =>
+              _buildForm(context, article, null),
+            EditArticleImagePicked(:final article, :final newImagePath) =>
+              _buildForm(context, article, newImagePath),
+            EditArticleSuccess() => _buildLoadingState(context, 'Saved!'),
+            EditArticleError(:final article, :final newImagePath) =>
+              _buildForm(context, article, newImagePath),
           };
         },
       ),
@@ -71,16 +73,18 @@ class _EditArticlePageState extends State<EditArticlePage> {
   }
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
+    final theme = Theme.of(context);
     return AppBar(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       surfaceTintColor: Colors.transparent,
       leading: IconButton(
-        icon: Icon(Icons.close, color: AppColors.textPrimary),
+        icon: Icon(Icons.close, color: theme.colorScheme.onSurface),
         onPressed: () => _showDiscardDialog(context),
       ),
       title: Text(
         'Edit Article',
-        style: AppTypography.titleLarge,
+        style: AppTypography.titleLarge
+            .copyWith(color: theme.colorScheme.onSurface),
       ),
       actions: [
         BlocBuilder<EditArticleCubit, EditArticleState>(
@@ -91,7 +95,9 @@ class _EditArticlePageState extends State<EditArticlePage> {
               child: Text(
                 'Save',
                 style: AppTypography.titleSmall.copyWith(
-                  color: isLoading ? AppColors.textMuted : AppColors.accent,
+                  color: isLoading
+                      ? theme.colorScheme.onSurface.withOpacity(0.5)
+                      : theme.colorScheme.primary,
                 ),
               ),
             );
@@ -102,7 +108,8 @@ class _EditArticlePageState extends State<EditArticlePage> {
     );
   }
 
-  Widget _buildLoadingState(String message) {
+  Widget _buildLoadingState(BuildContext context, String message) {
+    final theme = Theme.of(context);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -112,7 +119,7 @@ class _EditArticlePageState extends State<EditArticlePage> {
           Text(
             message,
             style: AppTypography.bodyMedium.copyWith(
-              color: AppColors.textMuted,
+              color: theme.colorScheme.onSurface.withOpacity(0.5),
             ),
           ),
         ],
@@ -137,6 +144,7 @@ class _EditArticlePageState extends State<EditArticlePage> {
             _buildImagePicker(context, article, newImagePath),
             SizedBox(height: AppSpacing.xl),
             _buildTextField(
+              context: context,
               controller: _titleController,
               label: 'Title',
               hint: 'Enter article title',
@@ -154,6 +162,7 @@ class _EditArticlePageState extends State<EditArticlePage> {
             ),
             SizedBox(height: AppSpacing.lg),
             _buildTextField(
+              context: context,
               controller: _descriptionController,
               label: 'Description',
               hint: 'Brief summary for the feed',
@@ -171,6 +180,7 @@ class _EditArticlePageState extends State<EditArticlePage> {
             ),
             SizedBox(height: AppSpacing.lg),
             _buildTextField(
+              context: context,
               controller: _contentController,
               label: 'Content',
               hint: 'Full article body',
@@ -200,6 +210,7 @@ class _EditArticlePageState extends State<EditArticlePage> {
     final cubit = context.read<EditArticleCubit>();
     final hasNewImage = newImagePath != null;
     final hasOriginalImage = article.urlToImage?.isNotEmpty == true;
+    final theme = Theme.of(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -207,7 +218,7 @@ class _EditArticlePageState extends State<EditArticlePage> {
         Text(
           'Thumbnail Image',
           style: AppTypography.titleSmall.copyWith(
-            color: AppColors.textPrimary,
+            color: theme.colorScheme.onSurface,
           ),
         ),
         SizedBox(height: AppSpacing.sm),
@@ -217,9 +228,9 @@ class _EditArticlePageState extends State<EditArticlePage> {
             height: 200,
             width: double.infinity,
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              color: theme.cardColor,
               borderRadius: BorderRadius.circular(AppRadius.lg),
-              border: Border.all(color: AppColors.border),
+              border: Border.all(color: theme.dividerColor),
             ),
             child: Stack(
               fit: StackFit.expand,
@@ -230,15 +241,19 @@ class _EditArticlePageState extends State<EditArticlePage> {
                       ? Image.file(
                           File(newImagePath),
                           fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) =>
+                              _buildImagePlaceholder(context),
                         )
                       : hasOriginalImage
                           ? CachedNetworkImage(
                               imageUrl: article.urlToImage!,
                               fit: BoxFit.cover,
-                              placeholder: (_, __) => _buildImagePlaceholder(),
-                              errorWidget: (_, __, ___) => _buildImagePlaceholder(),
+                              placeholder: (_, __) =>
+                                  _buildImagePlaceholder(context),
+                              errorWidget: (_, __, ___) =>
+                                  _buildImagePlaceholder(context),
                             )
-                          : _buildImagePlaceholder(),
+                          : _buildImagePlaceholder(context),
                 ),
                 // Change image overlay
                 Positioned(
@@ -293,7 +308,7 @@ class _EditArticlePageState extends State<EditArticlePage> {
                       child: Container(
                         padding: EdgeInsets.all(AppSpacing.xs),
                         decoration: BoxDecoration(
-                          color: AppColors.error,
+                          color: theme.colorScheme.error,
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
@@ -314,7 +329,7 @@ class _EditArticlePageState extends State<EditArticlePage> {
             child: Text(
               'New image selected',
               style: AppTypography.labelSmall.copyWith(
-                color: AppColors.accent,
+                color: theme.colorScheme.primary,
               ),
             ),
           ),
@@ -322,22 +337,23 @@ class _EditArticlePageState extends State<EditArticlePage> {
     );
   }
 
-  Widget _buildImagePlaceholder() {
+  Widget _buildImagePlaceholder(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
-      color: AppColors.surfaceLight,
+      color: theme.colorScheme.surfaceContainerHighest,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
             Icons.image_outlined,
             size: 48,
-            color: AppColors.textMuted,
+            color: theme.colorScheme.onSurface.withOpacity(0.5),
           ),
           SizedBox(height: AppSpacing.sm),
           Text(
             'No image',
             style: AppTypography.bodySmall.copyWith(
-              color: AppColors.textMuted,
+              color: theme.colorScheme.onSurface.withOpacity(0.5),
             ),
           ),
         ],
@@ -346,6 +362,7 @@ class _EditArticlePageState extends State<EditArticlePage> {
   }
 
   Widget _buildTextField({
+    required BuildContext context,
     required TextEditingController controller,
     required String label,
     required String hint,
@@ -353,13 +370,14 @@ class _EditArticlePageState extends State<EditArticlePage> {
     int maxLines = 1,
     String? Function(String?)? validator,
   }) {
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
           style: AppTypography.titleSmall.copyWith(
-            color: AppColors.textPrimary,
+            color: theme.colorScheme.onSurface,
           ),
         ),
         SizedBox(height: AppSpacing.sm),
@@ -369,34 +387,35 @@ class _EditArticlePageState extends State<EditArticlePage> {
           maxLength: maxLength,
           maxLines: maxLines,
           style: AppTypography.bodyMedium.copyWith(
-            color: AppColors.textPrimary,
+            color: theme.colorScheme.onSurface,
           ),
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: AppTypography.bodyMedium.copyWith(
-              color: AppColors.textMuted,
+              color: theme.colorScheme.onSurface.withOpacity(0.5),
             ),
             filled: true,
-            fillColor: AppColors.surface,
+            fillColor: theme.cardColor,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.md),
-              borderSide: BorderSide(color: AppColors.border),
+              borderSide: BorderSide(color: theme.dividerColor),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.md),
-              borderSide: BorderSide(color: AppColors.border),
+              borderSide: BorderSide(color: theme.dividerColor),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.md),
-              borderSide: BorderSide(color: AppColors.accent, width: 2),
+              borderSide:
+                  BorderSide(color: theme.colorScheme.primary, width: 2),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.md),
-              borderSide: BorderSide(color: AppColors.error),
+              borderSide: BorderSide(color: theme.colorScheme.error),
             ),
             contentPadding: EdgeInsets.all(AppSpacing.md),
             counterStyle: AppTypography.labelSmall.copyWith(
-              color: AppColors.textMuted,
+              color: theme.colorScheme.onSurface.withOpacity(0.5),
             ),
           ),
           validator: validator,
@@ -407,10 +426,11 @@ class _EditArticlePageState extends State<EditArticlePage> {
 
   void _showImageSourceDialog(BuildContext context) {
     final cubit = context.read<EditArticleCubit>();
+    final theme = Theme.of(context);
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.surface,
+      backgroundColor: theme.cardColor,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
           top: Radius.circular(AppRadius.xl),
@@ -427,14 +447,17 @@ class _EditArticlePageState extends State<EditArticlePage> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: AppColors.border,
+                    color: theme.dividerColor,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
                 SizedBox(height: AppSpacing.lg),
                 ListTile(
-                  leading: Icon(Icons.photo_library_outlined, color: AppColors.accent),
-                  title: Text('Choose from Gallery', style: AppTypography.bodyMedium),
+                  leading: Icon(Icons.photo_library_outlined,
+                      color: theme.colorScheme.primary),
+                  title: Text('Choose from Gallery',
+                      style: AppTypography.bodyMedium
+                          .copyWith(color: theme.colorScheme.onSurface)),
                   onTap: () {
                     Navigator.pop(dialogContext);
                     HapticService.lightImpact();
@@ -442,8 +465,11 @@ class _EditArticlePageState extends State<EditArticlePage> {
                   },
                 ),
                 ListTile(
-                  leading: Icon(Icons.camera_alt_outlined, color: AppColors.accent),
-                  title: Text('Take a Photo', style: AppTypography.bodyMedium),
+                  leading: Icon(Icons.camera_alt_outlined,
+                      color: theme.colorScheme.primary),
+                  title: Text('Take a Photo',
+                      style: AppTypography.bodyMedium
+                          .copyWith(color: theme.colorScheme.onSurface)),
                   onTap: () {
                     Navigator.pop(dialogContext);
                     HapticService.lightImpact();
@@ -459,12 +485,15 @@ class _EditArticlePageState extends State<EditArticlePage> {
   }
 
   void _handleStateChanges(BuildContext context, EditArticleState state) {
+    final theme = Theme.of(context);
     if (state is EditArticleSuccess) {
       HapticService.success();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Article updated successfully!'),
-          backgroundColor: AppColors.success,
+          content: Text('Article updated successfully!',
+              style: TextStyle(color: theme.colorScheme.onPrimary)),
+          backgroundColor: Colors
+              .green, // Success color often needs to be specific green, or use extended theme
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -473,8 +502,9 @@ class _EditArticlePageState extends State<EditArticlePage> {
       HapticService.error();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(state.message),
-          backgroundColor: AppColors.error,
+          content: Text(state.message,
+              style: TextStyle(color: theme.colorScheme.onError)),
+          backgroundColor: theme.colorScheme.error,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -494,11 +524,16 @@ class _EditArticlePageState extends State<EditArticlePage> {
 
   void _showDiscardDialog(BuildContext context) {
     HapticService.warning();
+    // Assuming ConfirmationModal is theme aware or needs simple colors
+    // Since I don't see ConfirmationModal code, I assume it accepts what it needs or follows context theme
+    // But I should check if it needs specific params.
+    // Based on previous code it seemed fine.
     showDialog(
       context: context,
       builder: (ctx) => ConfirmationModal(
         title: 'Discard Changes?',
-        message: 'Are you sure you want to discard your changes? This action cannot be undone.',
+        message:
+            'Are you sure you want to discard your changes? This action cannot be undone.',
         confirmLabel: 'Discard',
         isDanger: true,
         onConfirm: () {

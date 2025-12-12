@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:news_app_clean_architecture/config/theme/app_colors.dart';
+
 import 'package:news_app_clean_architecture/config/theme/app_spacing.dart';
 import 'package:news_app_clean_architecture/config/theme/app_typography.dart';
 import 'package:news_app_clean_architecture/config/theme/app_radius.dart';
@@ -15,6 +15,7 @@ import 'package:news_app_clean_architecture/features/daily_news/presentation/blo
 import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article/local/local_article_bloc.dart';
 import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article/local/local_article_state.dart';
 import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article/local/local_article_event.dart';
+import 'package:news_app_clean_architecture/config/theme/theme_cubit.dart';
 import 'package:news_app_clean_architecture/shared/widgets/widgets.dart';
 
 /// Premium Profile screen with user info and inline tabs for Articles/Saved.
@@ -46,32 +47,74 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.light,
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          actions: [
-            IconButton(
-              onPressed: () => _onSettingsTapped(context),
-              icon: Icon(
-                Icons.settings_outlined,
-                color: AppColors.textPrimary,
-              ),
+    return BlocBuilder<ThemeCubit, AppThemeMode>(
+      builder: (context, themeMode) {
+        final isDark = themeMode == AppThemeMode.dark;
+        final theme = Theme.of(context);
+
+        return AnnotatedRegion<SystemUiOverlayStyle>(
+          value:
+              isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+          child: Scaffold(
+            backgroundColor: theme.scaffoldBackgroundColor,
+            appBar: AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              actions: [
+                BlocBuilder<ThemeCubit, AppThemeMode>(
+                  builder: (context, themeMode) {
+                    final isDark = themeMode == AppThemeMode.dark;
+                    return IconButton(
+                      onPressed: () {
+                        HapticService.lightImpact();
+                        context.read<ThemeCubit>().toggleTheme();
+                      },
+                      icon: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 300),
+                        transitionBuilder: (child, animation) {
+                          return RotationTransition(
+                            turns:
+                                Tween(begin: 0.5, end: 1.0).animate(animation),
+                            child: FadeTransition(
+                              opacity: animation,
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: Icon(
+                          isDark
+                              ? Icons.light_mode_outlined
+                              : Icons.dark_mode_outlined,
+                          key: ValueKey(isDark),
+                          color: theme.colorScheme.onSurface,
+                        ),
+                      ),
+                      tooltip: isDark
+                          ? 'Switch to Light Mode'
+                          : 'Switch to Dark Mode',
+                    );
+                  },
+                ),
+                IconButton(
+                  onPressed: () => _onSettingsTapped(context),
+                  icon: Icon(
+                    Icons.settings_outlined,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-        body: NestedScrollView(
-          headerSliverBuilder: (context, innerBoxIsScrolled) => [
-            SliverToBoxAdapter(
-              child: _buildHeader(context),
+            body: NestedScrollView(
+              headerSliverBuilder: (context, innerBoxIsScrolled) => [
+                SliverToBoxAdapter(
+                  child: _buildHeader(context),
+                ),
+              ],
+              body: _buildTabContent(),
             ),
-          ],
-          body: _buildTabContent(),
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -106,6 +149,8 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildTabContent() {
+    final theme = Theme.of(context);
+
     if (_selectedTab == 0) {
       return BlocBuilder<MyArticlesCubit, MyArticlesState>(
         builder: (context, state) {
@@ -115,7 +160,7 @@ class _ProfilePageState extends State<ProfilePage> {
           if (state is MyArticlesError) {
             return Center(
                 child: Text(state.message,
-                    style: TextStyle(color: AppColors.error)));
+                    style: TextStyle(color: theme.colorScheme.error)));
           }
           if (state is MyArticlesLoaded) {
             final articles = state.articles;
@@ -126,7 +171,8 @@ class _ProfilePageState extends State<ProfilePage> {
             return ListView.separated(
               physics: const BouncingScrollPhysics(),
               padding: EdgeInsets.all(AppSpacing.screenPaddingH),
-              itemCount: articles.length + 2, // +1 for sign out button, +1 for extra padding
+              itemCount: articles.length +
+                  2, // +1 for sign out button, +1 for extra padding
               separatorBuilder: (_, __) => SizedBox(height: AppSpacing.md),
               itemBuilder: (context, index) {
                 if (index == articles.length) {
@@ -161,7 +207,8 @@ class _ProfilePageState extends State<ProfilePage> {
             return ListView.separated(
               physics: const BouncingScrollPhysics(),
               padding: EdgeInsets.all(AppSpacing.screenPaddingH),
-              itemCount: articles.length + 2, // +1 for sign out button, +1 for extra padding
+              itemCount: articles.length +
+                  2, // +1 for sign out button, +1 for extra padding
               separatorBuilder: (_, __) => SizedBox(height: AppSpacing.md),
               itemBuilder: (context, index) {
                 if (index == articles.length) {
@@ -190,6 +237,9 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildEmptyState(String message, IconData icon) {
+    final theme = Theme.of(context);
+    final textMuted = theme.colorScheme.onSurface.withOpacity(0.5);
+
     return Column(
       children: [
         Expanded(
@@ -197,11 +247,10 @@ class _ProfilePageState extends State<ProfilePage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, size: 48, color: AppColors.textMuted),
+                Icon(icon, size: 48, color: textMuted),
                 SizedBox(height: AppSpacing.md),
                 Text(message,
-                    style: AppTypography.bodyLarge
-                        .copyWith(color: AppColors.textMuted)),
+                    style: AppTypography.bodyLarge.copyWith(color: textMuted)),
               ],
             ),
           ),
@@ -217,34 +266,40 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _buildAvatarSection(
       String initial, String name, String email, String? photoURL) {
+    final theme = Theme.of(context);
+    final textSecondary = theme.colorScheme.onSurfaceVariant;
+
     return Column(
       children: [
         _buildProfileAvatar(initial, photoURL),
         SizedBox(height: AppSpacing.md),
-        Text(name, style: AppTypography.headlineMedium),
+        Text(name,
+            style: AppTypography.headlineMedium
+                .copyWith(color: theme.colorScheme.onSurface)),
         SizedBox(height: AppSpacing.xxs),
         Text(email,
-            style: AppTypography.bodyMedium
-                .copyWith(color: AppColors.textSecondary)),
+            style: AppTypography.bodyMedium.copyWith(color: textSecondary)),
         SizedBox(height: AppSpacing.sm),
         Container(
           padding: EdgeInsets.symmetric(
               horizontal: AppSpacing.md, vertical: AppSpacing.xxs),
           decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: 0.15),
+            color: theme.colorScheme.primary.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(AppRadius.full),
             border: Border.all(
-                color: AppColors.primary.withValues(alpha: 0.3), width: 1),
+                color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                width: 1),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.verified_rounded, size: 14, color: AppColors.primary),
+              Icon(Icons.verified_rounded,
+                  size: 14, color: theme.colorScheme.primary),
               SizedBox(width: AppSpacing.xxs),
               Text(
                 'JOURNALIST',
                 style: AppTypography.labelSmall.copyWith(
-                    color: AppColors.primary,
+                    color: theme.colorScheme.primary,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 0.5),
               ),
@@ -256,6 +311,8 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildProfileAvatar(String initial, String? photoURL) {
+    final theme = Theme.of(context);
+
     return BlocBuilder<AuthCubit, AuthState>(
       builder: (context, state) {
         final isUpdating = state is ProfilePhotoUpdating;
@@ -268,18 +325,19 @@ class _ProfilePageState extends State<ProfilePage> {
                 padding: EdgeInsets.all(4),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  gradient: AppColors.accentGradient,
+                  // Use primary color for gradient-like effect or simple color
+                  color: theme.colorScheme.primary.withValues(alpha: 0.2),
                 ),
                 child: CircleAvatar(
                   radius: 50,
-                  backgroundColor: AppColors.surface,
+                  backgroundColor: theme.canvasColor,
                   child: isUpdating
                       ? SizedBox(
                           width: 40,
                           height: 40,
                           child: CircularProgressIndicator(
                             strokeWidth: 3,
-                            color: AppColors.primary,
+                            color: theme.colorScheme.primary,
                           ),
                         )
                       : _buildAvatarContent(initial, photoURL),
@@ -292,14 +350,15 @@ class _ProfilePageState extends State<ProfilePage> {
                 child: Container(
                   padding: EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AppColors.primary,
+                    color: theme.colorScheme.primary,
                     shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.background, width: 2),
+                    border: Border.all(
+                        color: theme.scaffoldBackgroundColor, width: 2),
                   ),
                   child: Icon(
                     Icons.camera_alt_rounded,
                     size: 16,
-                    color: AppColors.background,
+                    color: theme.colorScheme.onPrimary,
                   ),
                 ),
               ),
@@ -330,7 +389,7 @@ class _ProfilePageState extends State<ProfilePage> {
     return Text(
       initial,
       style: AppTypography.displaySmall.copyWith(
-        color: AppColors.primary,
+        color: Theme.of(context).colorScheme.primary,
         fontWeight: FontWeight.bold,
       ),
     );
@@ -339,10 +398,11 @@ class _ProfilePageState extends State<ProfilePage> {
   void _showPhotoSourceDialog(BuildContext context) {
     HapticService.lightImpact();
     final authCubit = context.read<AuthCubit>();
+    final theme = Theme.of(context);
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.surface,
+      backgroundColor: theme.canvasColor,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
@@ -358,27 +418,29 @@ class _ProfilePageState extends State<ProfilePage> {
                   height: 4,
                   margin: EdgeInsets.only(bottom: AppSpacing.md),
                   decoration: BoxDecoration(
-                    color: AppColors.border,
+                    color: theme.dividerColor,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
                 Text(
                   'Change Profile Photo',
-                  style: AppTypography.titleMedium,
+                  style: AppTypography.titleMedium
+                      .copyWith(color: theme.colorScheme.onSurface),
                 ),
                 SizedBox(height: AppSpacing.md),
                 ListTile(
                   leading: Container(
                     padding: EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.1),
+                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(Icons.photo_library_outlined,
-                        color: AppColors.primary),
+                        color: theme.colorScheme.primary),
                   ),
                   title: Text('Choose from Gallery',
-                      style: AppTypography.bodyLarge),
+                      style: AppTypography.bodyLarge
+                          .copyWith(color: theme.colorScheme.onSurface)),
                   onTap: () {
                     Navigator.pop(dialogContext);
                     authCubit.pickProfilePhotoFromGallery();
@@ -388,13 +450,15 @@ class _ProfilePageState extends State<ProfilePage> {
                   leading: Container(
                     padding: EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.1),
+                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(Icons.camera_alt_outlined,
-                        color: AppColors.primary),
+                        color: theme.colorScheme.primary),
                   ),
-                  title: Text('Take a Photo', style: AppTypography.bodyLarge),
+                  title: Text('Take a Photo',
+                      style: AppTypography.bodyLarge
+                          .copyWith(color: theme.colorScheme.onSurface)),
                   onTap: () {
                     Navigator.pop(dialogContext);
                     authCubit.pickProfilePhotoFromCamera();
@@ -410,12 +474,13 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildStatsRow(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       padding: EdgeInsets.all(AppSpacing.sm), // compact padding
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: theme.dividerColor, width: 1),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -432,7 +497,10 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _buildStatItem(
       String label, bool isSelected, IconData icon, VoidCallback onTap) {
-    final color = isSelected ? AppColors.primary : AppColors.textMuted;
+    final theme = Theme.of(context);
+    final color = isSelected
+        ? theme.colorScheme.primary
+        : theme.colorScheme.onSurface.withOpacity(0.5);
 
     return Expanded(
       child: InkWell(
@@ -445,7 +513,7 @@ class _ProfilePageState extends State<ProfilePage> {
           padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
           decoration: isSelected
               ? BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.1),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 )
               : null,
@@ -466,36 +534,31 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildStatDivider() {
-    return Container(width: 1, height: 40, color: AppColors.border);
+    return Container(
+        width: 1, height: 40, color: Theme.of(context).dividerColor);
   }
 
   Widget _buildSignOutButton(BuildContext context) {
-    // Keep simpler version or move to settings,
-    // User asked to remove specific buttons but didn't explicitly ask to remove Logout from bottom.
-    // However, usually logout is at bottom.
-    // Since I am using NestedScrollView, I'll put Logout in settings or at bottom of the list?
-    // Actually, checking user request: "he wants articles below".
-    // I'll add Logout as an IconButton in AppBar or keep it at bottom of header if space permits?
-    // Let's put logout button in settings to clean up UI, or leave it in header?
-    // I'll leave it in the header for now to avoid removing functionality unless requested.
+    final theme = Theme.of(context);
     return GestureDetector(
       onTap: () => _showSignOutConfirmation(context),
       child: Container(
         padding: EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
-          color: AppColors.error.withValues(alpha: 0.1),
+          color: theme.colorScheme.error.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(
-              color: AppColors.error.withValues(alpha: 0.3), width: 1),
+              color: theme.colorScheme.error.withValues(alpha: 0.3), width: 1),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.logout_rounded, color: AppColors.error, size: 20),
+            Icon(Icons.logout_rounded,
+                color: theme.colorScheme.error, size: 20),
             SizedBox(width: AppSpacing.sm),
             Text('Sign Out',
-                style:
-                    AppTypography.titleSmall.copyWith(color: AppColors.error)),
+                style: AppTypography.titleSmall
+                    .copyWith(color: theme.colorScheme.error)),
           ],
         ),
       ),
@@ -538,59 +601,62 @@ class _ArticleListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: theme.cardColor,
           borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(color: AppColors.border, width: 1),
+          border: Border.all(color: theme.dividerColor, width: 1),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildThumbnail(),
+            _buildThumbnail(theme),
             SizedBox(width: AppSpacing.md),
-            Expanded(child: _buildContent()),
+            Expanded(child: _buildContent(theme)),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildThumbnail() {
+  Widget _buildThumbnail(ThemeData theme) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(AppRadius.md),
       child: Container(
         width: 80,
         height: 80,
-        color: AppColors.surfaceLight,
+        color: theme.colorScheme.surfaceContainerHighest,
         child: article.urlToImage?.isNotEmpty == true
             ? CachedNetworkImage(
                 imageUrl: article.urlToImage!,
                 fit: BoxFit.cover,
-                errorWidget: (_, __, ___) => _placeholder())
-            : _placeholder(),
+                errorWidget: (_, __, ___) => _placeholder(theme))
+            : _placeholder(theme),
       ),
     );
   }
 
-  Widget _placeholder() => Center(
-      child: Icon(Icons.image_outlined, color: AppColors.textMuted, size: 32));
+  Widget _placeholder(ThemeData theme) => Center(
+      child: Icon(Icons.image_outlined,
+          color: theme.colorScheme.onSurface.withOpacity(0.4), size: 32));
 
-  Widget _buildContent() {
+  Widget _buildContent(ThemeData theme) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(article.title ?? 'Untitled',
-            style: AppTypography.titleSmall,
+            style: AppTypography.titleSmall
+                .copyWith(color: theme.colorScheme.onSurface),
             maxLines: 2,
             overflow: TextOverflow.ellipsis),
         SizedBox(height: AppSpacing.xs),
         Text(article.publishedAt ?? '',
-            style:
-                AppTypography.bodySmall.copyWith(color: AppColors.textMuted)),
+            style: AppTypography.bodySmall
+                .copyWith(color: theme.colorScheme.onSurfaceVariant)),
       ],
     );
   }
@@ -610,6 +676,7 @@ class _SavedArticleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Dismissible(
       key: Key(article.url ?? article.title ?? index.toString()),
       direction: DismissDirection.endToStart,
@@ -617,16 +684,16 @@ class _SavedArticleCard extends StatelessWidget {
       background: Container(
         alignment: Alignment.centerRight,
         padding: EdgeInsets.only(right: AppSpacing.lg),
-        color: AppColors.error.withValues(alpha: 0.2),
-        child: Icon(Icons.delete_outline, color: AppColors.error),
+        color: theme.colorScheme.error.withValues(alpha: 0.2),
+        child: Icon(Icons.delete_outline, color: theme.colorScheme.error),
       ),
       child: GestureDetector(
         onTap: onTap,
         child: Container(
           decoration: BoxDecoration(
-            color: AppColors.surface,
+            color: theme.cardColor,
             borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: AppColors.border, width: 1),
+            border: Border.all(color: theme.dividerColor, width: 1),
           ),
           child: Row(
             children: [
@@ -641,8 +708,9 @@ class _SavedArticleCard extends StatelessWidget {
                       ? CachedNetworkImage(
                           imageUrl: article.urlToImage!,
                           fit: BoxFit.cover,
-                          errorWidget: (_, __, ___) => Icon(Icons.error))
-                      : Icon(Icons.image),
+                          errorWidget: (_, __, ___) =>
+                              Icon(Icons.error, color: theme.colorScheme.error))
+                      : Icon(Icons.image, color: theme.iconTheme.color),
                 ),
               ),
               Expanded(
@@ -654,10 +722,12 @@ class _SavedArticleCard extends StatelessWidget {
                       Text(article.title ?? 'Untitled',
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: AppTypography.titleMedium),
+                          style: AppTypography.titleMedium
+                              .copyWith(color: theme.colorScheme.onSurface)),
                       SizedBox(height: AppSpacing.xs),
                       Text(article.publishedAt ?? '',
-                          style: AppTypography.caption),
+                          style: AppTypography.caption.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant)),
                     ],
                   ),
                 ),

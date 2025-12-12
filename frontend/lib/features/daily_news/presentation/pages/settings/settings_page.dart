@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:news_app_clean_architecture/config/theme/app_colors.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:news_app_clean_architecture/config/theme/app_spacing.dart';
 import 'package:news_app_clean_architecture/config/theme/app_typography.dart';
 import 'package:news_app_clean_architecture/config/theme/app_radius.dart';
 import 'package:news_app_clean_architecture/core/services/haptic_service.dart';
 import 'package:news_app_clean_architecture/core/services/preferences_service.dart';
 import 'package:news_app_clean_architecture/injection_container.dart';
+import 'package:news_app_clean_architecture/config/theme/theme_cubit.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// Settings page with app preferences and information.
@@ -47,29 +48,38 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.light,
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        body: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            _buildAppBar(context),
-            SliverToBoxAdapter(
-              child: _buildContent(),
+    return BlocBuilder<ThemeCubit, AppThemeMode>(
+      builder: (context, themeMode) {
+        final isDark = themeMode == AppThemeMode.dark;
+        final theme = Theme.of(context);
+
+        return AnnotatedRegion<SystemUiOverlayStyle>(
+          value:
+              isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+          child: Scaffold(
+            backgroundColor: theme.scaffoldBackgroundColor,
+            body: CustomScrollView(
+              physics: const BouncingScrollPhysics(),
+              slivers: [
+                _buildAppBar(context),
+                SliverToBoxAdapter(
+                  child: _buildContent(context),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
   Widget _buildAppBar(BuildContext context) {
+    final theme = Theme.of(context);
     return SliverAppBar(
       expandedHeight: 100,
       floating: true,
       pinned: true,
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       surfaceTintColor: Colors.transparent,
       leading: _buildBackButton(context),
       flexibleSpace: FlexibleSpaceBar(
@@ -77,7 +87,7 @@ class _SettingsPageState extends State<SettingsPage> {
         title: Text(
           'Settings',
           style: AppTypography.headlineSmall.copyWith(
-            color: AppColors.textPrimary,
+            color: theme.colorScheme.onSurface,
           ),
         ),
         background: Container(
@@ -86,8 +96,8 @@ class _SettingsPageState extends State<SettingsPage> {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                AppColors.primaryDark.withValues(alpha: 0.3),
-                AppColors.background,
+                theme.colorScheme.primary.withValues(alpha: 0.1),
+                theme.scaffoldBackgroundColor,
               ],
             ),
           ),
@@ -97,6 +107,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _buildBackButton(BuildContext context) {
+    final theme = Theme.of(context);
     return GestureDetector(
       onTap: () {
         HapticService.lightImpact();
@@ -105,30 +116,32 @@ class _SettingsPageState extends State<SettingsPage> {
       child: Container(
         margin: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: AppColors.surfaceLight,
+          color: theme.colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(AppRadius.md),
         ),
         child: Icon(
           Icons.arrow_back_ios_new_rounded,
-          color: AppColors.textPrimary,
+          color: theme.colorScheme.onSurface,
           size: 20,
         ),
       ),
     );
   }
 
-  Widget _buildContent() {
+  Widget _buildContent(BuildContext context) {
+    final theme = Theme.of(context);
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: AppSpacing.screenPaddingH),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Preferences Section
-          _buildSectionHeader('Preferences')
+          _buildSectionHeader(context, 'Preferences')
               .animate()
               .fadeIn(duration: 300.ms),
 
           _buildToggleItem(
+            context: context,
             icon: Icons.vibration_rounded,
             title: 'Haptic Feedback',
             subtitle: 'Vibration on interactions',
@@ -137,6 +150,7 @@ class _SettingsPageState extends State<SettingsPage> {
           ).animate().fadeIn(duration: 300.ms, delay: 50.ms),
 
           _buildToggleItem(
+            context: context,
             icon: Icons.notifications_outlined,
             title: 'Notifications',
             subtitle: 'Push notifications for news',
@@ -145,6 +159,7 @@ class _SettingsPageState extends State<SettingsPage> {
           ).animate().fadeIn(duration: 300.ms, delay: 100.ms),
 
           _buildToggleItem(
+            context: context,
             icon: Icons.data_saver_on_outlined,
             title: 'Data Saver',
             subtitle: 'Reduce image quality to save data',
@@ -155,26 +170,29 @@ class _SettingsPageState extends State<SettingsPage> {
           SizedBox(height: AppSpacing.xxl),
 
           // About Section
-          _buildSectionHeader('About')
+          _buildSectionHeader(context, 'About')
               .animate()
               .fadeIn(duration: 300.ms, delay: 200.ms),
 
           _buildLinkItem(
+            context: context,
             icon: Icons.privacy_tip_outlined,
             title: 'Privacy Policy',
             onTap: () => _openUrl('https://example.com/privacy'),
           ).animate().fadeIn(duration: 300.ms, delay: 250.ms),
 
           _buildLinkItem(
+            context: context,
             icon: Icons.description_outlined,
             title: 'Terms of Service',
             onTap: () => _openUrl('https://example.com/terms'),
           ).animate().fadeIn(duration: 300.ms, delay: 300.ms),
 
           _buildLinkItem(
+            context: context,
             icon: Icons.info_outline_rounded,
             title: 'About App',
-            onTap: _showAboutDialog,
+            onTap: () => _showAboutDialog(context),
           ).animate().fadeIn(duration: 300.ms, delay: 350.ms),
 
           SizedBox(height: AppSpacing.xxl),
@@ -184,7 +202,7 @@ class _SettingsPageState extends State<SettingsPage> {
             child: Text(
               'Version 1.0.0',
               style: AppTypography.caption.copyWith(
-                color: AppColors.textMuted,
+                color: theme.colorScheme.onSurface.withOpacity(0.5),
               ),
             ),
           ).animate().fadeIn(duration: 300.ms, delay: 400.ms),
@@ -195,7 +213,8 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
+  Widget _buildSectionHeader(BuildContext context, String title) {
+    final theme = Theme.of(context);
     return Padding(
       padding: EdgeInsets.only(
         top: AppSpacing.lg,
@@ -204,7 +223,7 @@ class _SettingsPageState extends State<SettingsPage> {
       child: Text(
         title.toUpperCase(),
         style: AppTypography.labelSmall.copyWith(
-          color: AppColors.textMuted,
+          color: theme.colorScheme.onSurface.withOpacity(0.5),
           letterSpacing: 1.2,
         ),
       ),
@@ -212,20 +231,22 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _buildToggleItem({
+    required BuildContext context,
     required IconData icon,
     required String title,
     required String subtitle,
     required bool value,
     required ValueChanged<bool> onChanged,
   }) {
+    final theme = Theme.of(context);
     return Container(
       margin: EdgeInsets.only(bottom: AppSpacing.sm),
       padding: EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
-          color: AppColors.border,
+          color: theme.dividerColor,
           width: 1,
         ),
       ),
@@ -234,12 +255,12 @@ class _SettingsPageState extends State<SettingsPage> {
           Container(
             padding: EdgeInsets.all(AppSpacing.sm),
             decoration: BoxDecoration(
-              color: AppColors.accent.withValues(alpha: 0.1),
+              color: theme.colorScheme.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: Icon(
               icon,
-              color: AppColors.accent,
+              color: theme.colorScheme.primary,
               size: 20,
             ),
           ),
@@ -248,11 +269,13 @@ class _SettingsPageState extends State<SettingsPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: AppTypography.titleSmall),
+                Text(title,
+                    style: AppTypography.titleSmall
+                        .copyWith(color: theme.colorScheme.onSurface)),
                 Text(
                   subtitle,
                   style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.textMuted,
+                    color: theme.colorScheme.onSurface.withOpacity(0.5),
                   ),
                 ),
               ],
@@ -261,7 +284,9 @@ class _SettingsPageState extends State<SettingsPage> {
           Switch.adaptive(
             value: value,
             onChanged: onChanged,
-            activeColor: AppColors.accent,
+            activeColor: theme.colorScheme.primary,
+            inactiveTrackColor:
+                theme.colorScheme.onSurface.withValues(alpha: 0.3),
           ),
         ],
       ),
@@ -269,10 +294,12 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _buildLinkItem({
+    required BuildContext context,
     required IconData icon,
     required String title,
     required VoidCallback onTap,
   }) {
+    final theme = Theme.of(context);
     return GestureDetector(
       onTap: () {
         HapticService.lightImpact();
@@ -282,10 +309,10 @@ class _SettingsPageState extends State<SettingsPage> {
         margin: EdgeInsets.only(bottom: AppSpacing.sm),
         padding: EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: theme.cardColor,
           borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(
-            color: AppColors.border,
+            color: theme.dividerColor,
             width: 1,
           ),
         ),
@@ -294,22 +321,24 @@ class _SettingsPageState extends State<SettingsPage> {
             Container(
               padding: EdgeInsets.all(AppSpacing.sm),
               decoration: BoxDecoration(
-                color: AppColors.accent.withValues(alpha: 0.1),
+                color: theme.colorScheme.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               child: Icon(
                 icon,
-                color: AppColors.accent,
+                color: theme.colorScheme.primary,
                 size: 20,
               ),
             ),
             SizedBox(width: AppSpacing.md),
             Expanded(
-              child: Text(title, style: AppTypography.titleSmall),
+              child: Text(title,
+                  style: AppTypography.titleSmall
+                      .copyWith(color: theme.colorScheme.onSurface)),
             ),
             Icon(
               Icons.arrow_forward_ios_rounded,
-              color: AppColors.textMuted,
+              color: theme.colorScheme.onSurface.withOpacity(0.5),
               size: 16,
             ),
           ],
@@ -341,6 +370,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _openUrl(String url) async {
+    final theme = Theme.of(context);
     final uri = Uri.parse(url);
     try {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -350,9 +380,10 @@ class _SettingsPageState extends State<SettingsPage> {
           SnackBar(
             content: Text(
               'Could not open link',
-              style: AppTypography.bodyMedium.copyWith(color: Colors.white),
+              style: AppTypography.bodyMedium
+                  .copyWith(color: theme.colorScheme.onError),
             ),
-            backgroundColor: AppColors.error,
+            backgroundColor: theme.colorScheme.error,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(AppRadius.md),
@@ -363,7 +394,8 @@ class _SettingsPageState extends State<SettingsPage> {
     }
   }
 
-  void _showAboutDialog() {
+  void _showAboutDialog(BuildContext context) {
+    final theme = Theme.of(context);
     showAboutDialog(
       context: context,
       applicationName: 'News App',
@@ -372,7 +404,10 @@ class _SettingsPageState extends State<SettingsPage> {
         width: 48,
         height: 48,
         decoration: BoxDecoration(
-          gradient: AppColors.primaryGradient,
+          gradient: LinearGradient(colors: [
+            theme.colorScheme.primary,
+            theme.colorScheme.secondary,
+          ]),
           borderRadius: BorderRadius.circular(AppRadius.md),
         ),
         child: const Icon(

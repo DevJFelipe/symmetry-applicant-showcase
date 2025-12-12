@@ -256,9 +256,6 @@ class _CreateArticlePageState extends State<CreateArticlePage> {
         if (value == null || value.trim().isEmpty) {
           return 'Please enter a description';
         }
-        if (value.trim().length < 10) {
-          return 'Description must be at least 10 characters';
-        }
         return null;
       },
     );
@@ -280,9 +277,6 @@ class _CreateArticlePageState extends State<CreateArticlePage> {
       validator: (value) {
         if (value == null || value.trim().isEmpty) {
           return 'Please enter the article content';
-        }
-        if (value.trim().length < 50) {
-          return 'Content must be at least 50 characters';
         }
         return null;
       },
@@ -375,7 +369,7 @@ class _CreateArticlePageState extends State<CreateArticlePage> {
     if (_formKey.currentState?.validate() ?? false) {
       final user = authState.user;
       if (user == null) return;
-      
+
       context.read<CreateArticleCubit>().createArticle(
             title: _titleController.text,
             description: _descriptionController.text,

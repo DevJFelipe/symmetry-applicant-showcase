@@ -192,3 +192,182 @@ abstract final class AppColors {
   /// Accent gradient
   static const LinearGradient accentGradient = primaryGradient;
 }
+
+/// Premium Light Editorial color palette
+/// Designed for a clean, professional light mode experience
+abstract final class AppColorsLight {
+  // ==========================================
+  // PRIMARY COLORS - Royal Blue Accent (same as dark)
+  // ==========================================
+
+  /// Primary accent color - Royal Blue
+  static const Color primary = Color(0xFF2563EB);
+
+  /// Lighter variant for hover states and highlights
+  static const Color primaryLight = Color(0xFF60A5FA);
+
+  /// Darker variant for pressed states
+  static const Color primaryDark = Color(0xFF1D4ED8);
+
+  /// Very light variant for subtle backgrounds
+  static const Color primarySoft = Color(0xFFDBEAFE);
+
+  // ==========================================
+  // BACKGROUND COLORS - Clean Light Editorial
+  // ==========================================
+
+  /// Main background - Pure white with slight warmth
+  static const Color background = Color(0xFFFAFAFC);
+
+  /// Secondary background for cards and elevated surfaces
+  static const Color surface = Color(0xFFFFFFFF);
+
+  /// Tertiary surface for nested elements
+  static const Color surfaceVariant = Color(0xFFF3F4F6);
+
+  /// Lighter surface variant
+  static const Color surfaceLight = Color(0xFFF9FAFB);
+
+  /// Elevated surface for modals and dialogs
+  static const Color surfaceElevated = Color(0xFFFFFFFF);
+
+  // ==========================================
+  // TEXT COLORS
+  // ==========================================
+
+  /// Primary text - High emphasis
+  static const Color textPrimary = Color(0xFF111827);
+
+  /// Secondary text - Medium emphasis
+  static const Color textSecondary = Color(0xFF4B5563);
+
+  /// Tertiary text - Low emphasis (metadata, captions)
+  static const Color textTertiary = Color(0xFF9CA3AF);
+
+  /// Muted text - Very low emphasis
+  static const Color textMuted = Color(0xFF9CA3AF);
+
+  /// Disabled text
+  static const Color textDisabled = Color(0xFFD1D5DB);
+
+  /// Text on primary color background
+  static const Color textOnPrimary = Color(0xFFFFFFFF);
+
+  // ==========================================
+  // SEMANTIC COLORS (same as dark)
+  // ==========================================
+
+  /// Success - Emerald green
+  static const Color success = Color(0xFF10B981);
+  static const Color successLight = Color(0xFF34D399);
+  static const Color successSoft = Color(0xFFD1FAE5);
+
+  /// Error - Rose red
+  static const Color error = Color(0xFFEF4444);
+  static const Color errorLight = Color(0xFFF87171);
+  static const Color errorSoft = Color(0xFFFEE2E2);
+
+  /// Warning - Amber
+  static const Color warning = Color(0xFFF59E0B);
+  static const Color warningLight = Color(0xFFFBBF24);
+  static const Color warningSoft = Color(0xFFFEF3C7);
+
+  /// Info - Cyan
+  static const Color info = Color(0xFF06B6D4);
+  static const Color infoLight = Color(0xFF22D3EE);
+  static const Color infoSoft = Color(0xFFCFFAFE);
+
+  // ==========================================
+  // BORDERS & DIVIDERS
+  // ==========================================
+
+  /// Subtle border for cards
+  static const Color border = Color(0xFFE5E7EB);
+
+  /// More visible border for inputs
+  static const Color borderStrong = Color(0xFFD1D5DB);
+
+  /// Divider lines
+  static const Color divider = Color(0xFFF3F4F6);
+
+  // ==========================================
+  // OVERLAY & EFFECTS
+  // ==========================================
+
+  /// Scrim for modals and dialogs
+  static const Color scrim = Color(0x80000000);
+
+  /// Shimmer base color
+  static const Color shimmerBase = Color(0xFFF3F4F6);
+
+  /// Shimmer highlight color
+  static const Color shimmerHighlight = Color(0xFFFFFFFF);
+
+  // ==========================================
+  // GRADIENT PRESETS
+  // ==========================================
+
+  /// Image overlay gradient (bottom to top)
+  static const LinearGradient imageOverlay = LinearGradient(
+    begin: Alignment.bottomCenter,
+    end: Alignment.topCenter,
+    colors: [
+      Color(0xE6FFFFFF), // 90% opacity white
+      Color(0x80FFFFFF), // 50% opacity
+      Color(0x00FFFFFF), // Transparent
+    ],
+    stops: [0.0, 0.5, 1.0],
+  );
+
+  /// Subtle image overlay for smaller cards
+  static const LinearGradient imageOverlaySubtle = LinearGradient(
+    begin: Alignment.bottomCenter,
+    end: Alignment.topCenter,
+    colors: [
+      Color(0xCCFFFFFF), // 80% opacity
+      Color(0x00FFFFFF), // Transparent
+    ],
+    stops: [0.0, 0.6],
+  );
+
+  /// Primary gradient for buttons and accents
+  static const LinearGradient primaryGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [
+      Color(0xFF60A5FA),
+      Color(0xFF2563EB),
+      Color(0xFF1D4ED8),
+    ],
+  );
+
+  /// Glass effect gradient
+  static const LinearGradient glassGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [
+      Color(0x1A000000),
+      Color(0x0D000000),
+    ],
+  );
+
+  // ==========================================
+  // SHADOW COLORS
+  // ==========================================
+
+  /// Dark shadow for elevation
+  static const Color shadowDark = Color(0x20000000);
+
+  /// Subtle shadow
+  static const Color shadowLight = Color(0x10000000);
+
+  // ==========================================
+  // ACCENT ALIASES
+  // ==========================================
+
+  /// Accent color alias for primary
+  static const Color accent = primary;
+
+  /// Accent gradient
+  static const LinearGradient accentGradient = primaryGradient;
+}

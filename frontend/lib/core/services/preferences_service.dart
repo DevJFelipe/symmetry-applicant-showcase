@@ -46,4 +46,16 @@ class PreferencesService {
   /// Sets the data saver preference.
   Future<void> setDataSaverEnabled(bool value) =>
       _prefs.setBool(_keyDataSaverEnabled, value);
+
+  // ============================================
+  // THEME MODE
+  // ============================================
+
+  static const String _keyDarkMode = 'dark_mode';
+
+  /// Whether dark mode is enabled. Defaults to true.
+  bool get isDarkMode => _prefs.getBool(_keyDarkMode) ?? true;
+
+  /// Sets the dark mode preference.
+  Future<void> setDarkMode(bool value) => _prefs.setBool(_keyDarkMode, value);
 }
