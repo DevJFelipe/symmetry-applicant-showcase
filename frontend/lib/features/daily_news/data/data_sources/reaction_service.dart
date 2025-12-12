@@ -39,7 +39,7 @@ class ReactionService {
   /// - If the user has a DIFFERENT reaction type, replaces it.
   ///
   /// Returns the updated reactions data.
-  Future<ReactionResult> toggleReaction({
+  Future<ServiceReactionResult> toggleReaction({
     required String? documentId,
     required String? articleUrl,
     required String userId,
@@ -64,17 +64,17 @@ class ReactionService {
   }
 
   /// Toggles reaction on a user-created Firestore article.
-  Future<ReactionResult> _toggleFirestoreArticleReaction({
+  Future<ServiceReactionResult> _toggleFirestoreArticleReaction({
     required String documentId,
     required String userId,
     required String reactionType,
   }) async {
-    return _firestore.runTransaction<ReactionResult>((transaction) async {
+    return _firestore.runTransaction<ServiceReactionResult>((transaction) async {
       final docRef = _firestore.collection(_articlesCollection).doc(documentId);
       final doc = await transaction.get(docRef);
 
       if (!doc.exists) {
-        throw ReactionException(
+        throw ServiceReactionException(
           code: 'not-found',
           message: 'Article not found',
         );
@@ -100,14 +100,14 @@ class ReactionService {
   /// Toggles reaction on an external API article.
   ///
   /// Creates a document in 'article_reactions' collection if it doesn't exist.
-  Future<ReactionResult> _toggleExternalArticleReaction({
+  Future<ServiceReactionResult> _toggleExternalArticleReaction({
     required String articleUrl,
     required String userId,
     required String reactionType,
   }) async {
     final articleId = _generateArticleId(articleUrl);
 
-    return _firestore.runTransaction<ReactionResult>((transaction) async {
+    return _firestore.runTransaction<ServiceReactionResult>((transaction) async {
       final docRef = _firestore.collection(_reactionsCollection).doc(articleId);
       final doc = await transaction.get(docRef);
 
@@ -153,7 +153,7 @@ class ReactionService {
   /// - Same reaction type = remove
   /// - Different reaction type = replace (remove old, add new)
   /// - No existing reaction = add
-  ReactionResult _calculateReactionUpdate({
+  ServiceReactionResult _calculateReactionUpdate({
     required Map<String, dynamic>? currentReactions,
     required Map<String, dynamic>? currentUserReactions,
     required String userId,
@@ -183,30 +183,30 @@ class ReactionService {
     if (existingReactionType == newReactionType) {
       // Same reaction - remove it (toggle off)
       _removeReaction(reactions, userReactions, userId, existingReactionType!);
-      return ReactionResult(
+      return ServiceReactionResult(
         reactions: reactions,
         userReactions: userReactions,
-        action: ReactionAction.removed,
+        action: ServiceReactionAction.removed,
         reactionType: existingReactionType,
       );
     } else if (existingReactionType != null) {
       // Different reaction - replace it
       _removeReaction(reactions, userReactions, userId, existingReactionType);
       _addReaction(reactions, userReactions, userId, newReactionType);
-      return ReactionResult(
+      return ServiceReactionResult(
         reactions: reactions,
         userReactions: userReactions,
-        action: ReactionAction.replaced,
+        action: ServiceReactionAction.replaced,
         reactionType: newReactionType,
         previousReactionType: existingReactionType,
       );
     } else {
       // No existing reaction - add new one
       _addReaction(reactions, userReactions, userId, newReactionType);
-      return ReactionResult(
+      return ServiceReactionResult(
         reactions: reactions,
         userReactions: userReactions,
-        action: ReactionAction.added,
+        action: ServiceReactionAction.added,
         reactionType: newReactionType,
       );
     }
@@ -254,7 +254,7 @@ class ReactionService {
   }
 
   /// Gets reactions for an external article by URL.
-  Future<ReactionData?> getExternalArticleReactions(String articleUrl) async {
+  Future<ServiceReactionData?> getExternalArticleReactions(String articleUrl) async {
     final articleId = _generateArticleId(articleUrl);
     final doc =
         await _firestore.collection(_reactionsCollection).doc(articleId).get();
@@ -262,19 +262,19 @@ class ReactionService {
     if (!doc.exists) return null;
 
     final data = doc.data()!;
-    return ReactionData.fromMap(data);
+    return ServiceReactionData.fromMap(data);
   }
 
   /// Gets reactions for multiple external articles by URLs.
   ///
-  /// Returns a map of URL -> ReactionData for efficient batch fetching.
-  Future<Map<String, ReactionData>> getExternalArticlesReactions(
+  /// Returns a map of URL -> ServiceReactionData for efficient batch fetching.
+  Future<Map<String, ServiceReactionData>> getExternalArticlesReactions(
     List<String> articleUrls,
   ) async {
     if (articleUrls.isEmpty) return {};
 
     final articleIds = articleUrls.map(_generateArticleId).toList();
-    final results = <String, ReactionData>{};
+    final results = <String, ServiceReactionData>{};
 
     // Firestore 'in' queries are limited to 30 items
     const batchSize = 30;
@@ -293,7 +293,7 @@ class ReactionService {
         final data = doc.data();
         final url = data['articleUrl'] as String?;
         if (url != null) {
-          results[url] = ReactionData.fromMap(data);
+          results[url] = ServiceReactionData.fromMap(data);
         }
       }
     }
@@ -302,15 +302,18 @@ class ReactionService {
   }
 }
 
-/// Result of a reaction toggle operation.
-class ReactionResult {
+/// Result of a reaction toggle operation (service-level).
+///
+/// Used internally by [ReactionService]. The repository layer
+/// converts this to domain entities.
+class ServiceReactionResult {
   final Map<String, int> reactions;
   final Map<String, List<String>> userReactions;
-  final ReactionAction action;
+  final ServiceReactionAction action;
   final String reactionType;
   final String? previousReactionType;
 
-  const ReactionResult({
+  const ServiceReactionResult({
     required this.reactions,
     required this.userReactions,
     required this.action,
@@ -319,21 +322,24 @@ class ReactionResult {
   });
 }
 
-/// Actions that can result from a toggle operation.
-enum ReactionAction { added, removed, replaced }
+/// Actions that can result from a toggle operation (service-level).
+enum ServiceReactionAction { added, removed, replaced }
 
-/// Reaction data for an article.
-class ReactionData {
+/// Reaction data for an article (service-level).
+///
+/// Used internally by [ReactionService]. The repository layer
+/// converts this to domain entities.
+class ServiceReactionData {
   final Map<String, int> reactions;
   final Map<String, List<String>> userReactions;
 
-  const ReactionData({
+  const ServiceReactionData({
     required this.reactions,
     required this.userReactions,
   });
 
-  factory ReactionData.fromMap(Map<String, dynamic> data) {
-    return ReactionData(
+  factory ServiceReactionData.fromMap(Map<String, dynamic> data) {
+    return ServiceReactionData(
       reactions: Map<String, int>.from(
         (data['reactions'] as Map<String, dynamic>?)?.map(
               (k, v) => MapEntry(k, (v as num).toInt()),
@@ -350,12 +356,12 @@ class ReactionData {
   }
 }
 
-/// Exception for reaction operations.
-class ReactionException implements Exception {
+/// Exception for reaction operations (service-level).
+class ServiceReactionException implements Exception {
   final String code;
   final String message;
 
-  const ReactionException({
+  const ServiceReactionException({
     required this.code,
     required this.message,
   });

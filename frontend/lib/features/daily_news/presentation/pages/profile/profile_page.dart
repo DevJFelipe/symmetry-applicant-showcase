@@ -40,7 +40,8 @@ class _ProfilePageState extends State<ProfilePage> {
     if (authState is AuthAuthenticated && authState.user != null) {
       context.read<MyArticlesCubit>().loadArticles(authState.user!.uid);
     }
-    // LocalArticleBloc is already loading via routes injection
+    // Load saved articles
+    context.read<LocalArticleBloc>().add(const GetSavedArticles());
   }
 
   @override

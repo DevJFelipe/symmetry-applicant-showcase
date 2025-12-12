@@ -30,9 +30,12 @@ import 'package:news_app_clean_architecture/features/auth/presentation/bloc/auth
 import 'package:news_app_clean_architecture/features/daily_news/data/data_sources/firestore_article_service.dart';
 import 'package:news_app_clean_architecture/features/daily_news/data/data_sources/reaction_service.dart';
 import 'package:news_app_clean_architecture/features/daily_news/data/repository/firestore_article_repository_impl.dart';
+import 'package:news_app_clean_architecture/features/daily_news/data/repository/reaction_repository_impl.dart';
 import 'package:news_app_clean_architecture/features/daily_news/domain/repository/firestore_article_repository.dart';
+import 'package:news_app_clean_architecture/features/daily_news/domain/repository/reaction_repository.dart';
 import 'package:news_app_clean_architecture/features/daily_news/domain/usecases/create_article.dart';
 import 'package:news_app_clean_architecture/features/daily_news/domain/usecases/toggle_reaction.dart';
+import 'package:news_app_clean_architecture/features/daily_news/domain/usecases/toggle_article_reaction.dart';
 import 'package:news_app_clean_architecture/features/daily_news/domain/usecases/get_user_articles.dart';
 import 'package:news_app_clean_architecture/features/daily_news/domain/usecases/delete_article.dart';
 import 'package:news_app_clean_architecture/features/daily_news/domain/usecases/update_article.dart';
@@ -130,6 +133,10 @@ Future<void> initializeDependencies() async {
   // Reaction Service (for both Firestore and external articles)
   sl.registerSingleton<ReactionService>(ReactionService());
 
+  // Reaction Repository
+  sl.registerSingleton<ReactionRepository>(
+      ReactionRepositoryImpl(sl<ReactionService>()));
+
   // Firestore Repository
   sl.registerSingleton<FirestoreArticleRepository>(
       FirestoreArticleRepositoryImpl(sl<FirestoreArticleService>()));
@@ -151,7 +158,10 @@ Future<void> initializeDependencies() async {
       UpdateArticleUseCase(sl<FirestoreArticleRepository>()));
 
   sl.registerSingleton<GetExternalReactionsUseCase>(
-      GetExternalReactionsUseCase(sl<ReactionService>()));
+      GetExternalReactionsUseCase(sl<ReactionRepository>()));
+
+  sl.registerSingleton<ToggleArticleReactionUseCase>(
+      ToggleArticleReactionUseCase(sl<ReactionRepository>()));
 
   // Create Article Cubit
   sl.registerFactory<CreateArticleCubit>(() => CreateArticleCubit(
@@ -172,7 +182,7 @@ Future<void> initializeDependencies() async {
 
   // Article Detail Cubit (for reactions)
   sl.registerFactory<ArticleDetailCubit>(() => ArticleDetailCubit(
-        reactionService: sl<ReactionService>(),
+        toggleReactionUseCase: sl<ToggleArticleReactionUseCase>(),
       ));
 
   // Edit Article Cubit

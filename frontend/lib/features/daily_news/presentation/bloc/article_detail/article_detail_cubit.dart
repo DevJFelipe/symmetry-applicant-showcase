@@ -1,6 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:news_app_clean_architecture/features/daily_news/data/data_sources/reaction_service.dart';
 import 'package:news_app_clean_architecture/features/daily_news/domain/entities/article.dart';
+import 'package:news_app_clean_architecture/features/daily_news/domain/usecases/toggle_article_reaction.dart';
 import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article_detail/article_detail_state.dart';
 
 export 'article_detail_state.dart';
@@ -18,11 +18,11 @@ export 'article_detail_state.dart';
 ///
 /// Each user can only have ONE active reaction per article.
 class ArticleDetailCubit extends Cubit<ArticleDetailState> {
-  final ReactionService _reactionService;
+  final ToggleArticleReactionUseCase _toggleReactionUseCase;
 
   ArticleDetailCubit({
-    required ReactionService reactionService,
-  })  : _reactionService = reactionService,
+    required ToggleArticleReactionUseCase toggleReactionUseCase,
+  })  : _toggleReactionUseCase = toggleReactionUseCase,
         super(const ArticleDetailInitial());
 
   /// Loads an article into the cubit state.
@@ -90,12 +90,14 @@ class ArticleDetailCubit extends Cubit<ArticleDetailState> {
     ));
 
     try {
-      // Make server request
-      final result = await _reactionService.toggleReaction(
-        documentId: article.documentId,
-        articleUrl: article.url,
-        userId: userId,
-        reactionType: reactionType.name,
+      // Make server request using use case
+      final result = await _toggleReactionUseCase.call(
+        params: ToggleArticleReactionParams(
+          documentId: article.documentId,
+          articleUrl: article.url,
+          userId: userId,
+          reactionType: reactionType.name,
+        ),
       );
 
       // Update article with server response

@@ -333,7 +333,7 @@ class _PremiumArticleDetailState extends State<PremiumArticleDetail> {
             
             // Content
             Text(
-              widget.article.content ?? 'No content available.',
+              _cleanContent(widget.article.content),
               style: AppTypography.articleBody,
             )
                 .animate()
@@ -599,6 +599,17 @@ class _PremiumArticleDetailState extends State<PremiumArticleDetail> {
   }
 
   // Helper methods
+  
+  /// Cleans the article content by removing the "[+XXXX chars]" suffix
+  /// that comes from external news APIs.
+  String _cleanContent(String? content) {
+    if (content == null || content.isEmpty) return 'No content available.';
+    
+    // Remove patterns like "[+1234 chars]" or "... [+1234 chars]"
+    final cleanedContent = content.replaceAll(RegExp(r'\s*\[\+\d+\s*chars\]'), '');
+    return cleanedContent.trim();
+  }
+
   bool _isOwnArticle() {
     final currentUserId = context.read<AuthCubit>().state.user?.uid;
     if (currentUserId == null) return false;
