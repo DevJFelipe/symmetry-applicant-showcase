@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:news_app_clean_architecture/features/auth/data/data_sources/firebase_auth_service.dart';
+import 'package:news_app_clean_architecture/features/auth/data/data_sources/profile_storage_service.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/entities/auth_exception.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/entities/user.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/repository/auth_repository.dart';
@@ -10,8 +13,9 @@ import 'package:news_app_clean_architecture/features/auth/domain/repository/auth
 /// converting Firebase-specific responses to domain entities.
 class AuthRepositoryImpl implements AuthRepository {
   final FirebaseAuthService _authService;
+  final ProfileStorageService _storageService;
 
-  AuthRepositoryImpl(this._authService);
+  AuthRepositoryImpl(this._authService, this._storageService);
 
   @override
   Future<UserEntity?> getCurrentUser() async {
@@ -77,6 +81,38 @@ class AuthRepositoryImpl implements AuthRepository {
       throw AuthException(code: e.code, message: e.message ?? e.code);
     } catch (e) {
       throw AuthException(code: 'unknown', message: 'An unexpected error occurred: $e');
+    }
+  }
+
+  @override
+  Future<UserEntity> updateProfilePhoto({
+    required File imageFile,
+    required String userId,
+  }) async {
+    try {
+      // Get current photo URL to delete later
+      final currentPhotoURL = _authService.getCurrentPhotoURL();
+
+      // Upload new photo
+      final newPhotoURL = await _storageService.uploadProfilePhoto(
+        imageFile: imageFile,
+        userId: userId,
+      );
+
+      // Update Firebase Auth profile with new URL
+      final userModel = await _authService.updatePhotoURL(newPhotoURL);
+
+      // Delete previous photo from storage (after successful update)
+      await _storageService.deleteProfilePhoto(currentPhotoURL);
+
+      return userModel.toEntity();
+    } on fb.FirebaseAuthException catch (e) {
+      throw AuthException(code: e.code, message: e.message ?? e.code);
+    } catch (e) {
+      throw AuthException(
+        code: 'photo-upload-failed',
+        message: 'Failed to update profile photo: $e',
+      );
     }
   }
 

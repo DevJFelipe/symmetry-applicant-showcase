@@ -20,7 +20,13 @@ class FirebaseAuthService {
       uid: user.uid,
       email: user.email ?? '',
       displayName: user.displayName,
+      photoURL: user.photoURL,
     );
+  }
+
+  /// Returns the current user's photo URL, or null if not set.
+  String? getCurrentPhotoURL() {
+    return _firebaseAuth.currentUser?.photoURL;
   }
 
   /// Signs in with email and password.
@@ -46,6 +52,7 @@ class FirebaseAuthService {
       uid: user.uid,
       email: user.email ?? '',
       displayName: user.displayName,
+      photoURL: user.photoURL,
     );
   }
 
@@ -79,6 +86,33 @@ class FirebaseAuthService {
       uid: user.uid,
       email: user.email ?? '',
       displayName: displayName ?? user.displayName,
+      photoURL: user.photoURL,
+    );
+  }
+
+  /// Updates the user's profile photo URL.
+  /// 
+  /// Returns the updated UserModel after the change.
+  Future<UserModel> updatePhotoURL(String photoURL) async {
+    final user = _firebaseAuth.currentUser;
+    if (user == null) {
+      throw FirebaseAuthException(
+        code: 'user-not-found',
+        message: 'No authenticated user found',
+      );
+    }
+
+    await user.updatePhotoURL(photoURL);
+    await user.reload();
+
+    // Get the refreshed user
+    final updatedUser = _firebaseAuth.currentUser!;
+
+    return UserModel(
+      uid: updatedUser.uid,
+      email: updatedUser.email ?? '',
+      displayName: updatedUser.displayName,
+      photoURL: updatedUser.photoURL,
     );
   }
 
@@ -95,6 +129,7 @@ class FirebaseAuthService {
         uid: user.uid,
         email: user.email ?? '',
         displayName: user.displayName,
+        photoURL: user.photoURL,
       );
     });
   }

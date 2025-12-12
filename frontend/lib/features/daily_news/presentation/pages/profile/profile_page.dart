@@ -80,6 +80,7 @@ class _ProfilePageState extends State<ProfilePage> {
         final user = state.user;
         final displayName = user?.displayName ?? 'Journalist';
         final email = user?.email ?? '';
+        final photoURL = user?.photoURL;
         final initial =
             displayName.isNotEmpty ? displayName[0].toUpperCase() : 'J';
 
@@ -87,7 +88,7 @@ class _ProfilePageState extends State<ProfilePage> {
           padding: EdgeInsets.symmetric(horizontal: AppSpacing.screenPaddingH),
           child: Column(
             children: [
-              _buildAvatarSection(initial, displayName, email)
+              _buildAvatarSection(initial, displayName, email, photoURL)
                   .animate()
                   .fadeIn(duration: 400.ms)
                   .slideY(begin: 0.1, end: 0),
@@ -95,10 +96,6 @@ class _ProfilePageState extends State<ProfilePage> {
               _buildStatsRow(context)
                   .animate()
                   .fadeIn(duration: 400.ms, delay: 100.ms),
-              SizedBox(height: AppSpacing.lg),
-              _buildSignOutButton(context)
-                  .animate()
-                  .fadeIn(duration: 400.ms, delay: 200.ms),
               SizedBox(height: AppSpacing.lg),
             ],
           ),
@@ -128,10 +125,13 @@ class _ProfilePageState extends State<ProfilePage> {
             return ListView.separated(
               physics: const BouncingScrollPhysics(),
               padding: EdgeInsets.all(AppSpacing.screenPaddingH),
-              itemCount: articles.length + 1, // +1 for extra padding at bottom
+              itemCount: articles.length + 2, // +1 for sign out button, +1 for extra padding
               separatorBuilder: (_, __) => SizedBox(height: AppSpacing.md),
               itemBuilder: (context, index) {
                 if (index == articles.length) {
+                  return _buildSignOutButton(context);
+                }
+                if (index == articles.length + 1) {
                   return SizedBox(height: AppSpacing.xxxl);
                 }
                 return _ArticleListItem(
@@ -160,10 +160,13 @@ class _ProfilePageState extends State<ProfilePage> {
             return ListView.separated(
               physics: const BouncingScrollPhysics(),
               padding: EdgeInsets.all(AppSpacing.screenPaddingH),
-              itemCount: articles.length + 1,
+              itemCount: articles.length + 2, // +1 for sign out button, +1 for extra padding
               separatorBuilder: (_, __) => SizedBox(height: AppSpacing.md),
               itemBuilder: (context, index) {
                 if (index == articles.length) {
+                  return _buildSignOutButton(context);
+                }
+                if (index == articles.length + 1) {
                   return SizedBox(height: AppSpacing.xxxl);
                 }
                 final article = articles[index];
@@ -186,41 +189,36 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildEmptyState(String message, IconData icon) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 48, color: AppColors.textMuted),
-          SizedBox(height: AppSpacing.md),
-          Text(message,
-              style:
-                  AppTypography.bodyLarge.copyWith(color: AppColors.textMuted)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAvatarSection(String initial, String name, String email) {
     return Column(
       children: [
-        Container(
-          padding: EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: AppColors.accentGradient,
-          ),
-          child: CircleAvatar(
-            radius: 50,
-            backgroundColor: AppColors.surface,
-            child: Text(
-              initial,
-              style: AppTypography.displaySmall.copyWith(
-                color: AppColors.primary,
-                fontWeight: FontWeight.bold,
-              ),
+        Expanded(
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: 48, color: AppColors.textMuted),
+                SizedBox(height: AppSpacing.md),
+                Text(message,
+                    style: AppTypography.bodyLarge
+                        .copyWith(color: AppColors.textMuted)),
+              ],
             ),
           ),
         ),
+        Padding(
+          padding: EdgeInsets.all(AppSpacing.screenPaddingH),
+          child: _buildSignOutButton(context),
+        ),
+        SizedBox(height: AppSpacing.xxxl),
+      ],
+    );
+  }
+
+  Widget _buildAvatarSection(
+      String initial, String name, String email, String? photoURL) {
+    return Column(
+      children: [
+        _buildProfileAvatar(initial, photoURL),
         SizedBox(height: AppSpacing.md),
         Text(name, style: AppTypography.headlineMedium),
         SizedBox(height: AppSpacing.xxs),
@@ -253,6 +251,160 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildProfileAvatar(String initial, String? photoURL) {
+    return BlocBuilder<AuthCubit, AuthState>(
+      builder: (context, state) {
+        final isUpdating = state is ProfilePhotoUpdating;
+
+        return GestureDetector(
+          onTap: isUpdating ? null : () => _showPhotoSourceDialog(context),
+          child: Stack(
+            children: [
+              Container(
+                padding: EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: AppColors.accentGradient,
+                ),
+                child: CircleAvatar(
+                  radius: 50,
+                  backgroundColor: AppColors.surface,
+                  child: isUpdating
+                      ? SizedBox(
+                          width: 40,
+                          height: 40,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 3,
+                            color: AppColors.primary,
+                          ),
+                        )
+                      : _buildAvatarContent(initial, photoURL),
+                ),
+              ),
+              // Camera icon overlay
+              Positioned(
+                bottom: 0,
+                right: 0,
+                child: Container(
+                  padding: EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.background, width: 2),
+                  ),
+                  child: Icon(
+                    Icons.camera_alt_rounded,
+                    size: 16,
+                    color: AppColors.background,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAvatarContent(String initial, String? photoURL) {
+    if (photoURL != null && photoURL.isNotEmpty) {
+      return ClipOval(
+        child: CachedNetworkImage(
+          imageUrl: photoURL,
+          width: 100,
+          height: 100,
+          fit: BoxFit.cover,
+          placeholder: (_, __) => _buildInitialAvatar(initial),
+          errorWidget: (_, __, ___) => _buildInitialAvatar(initial),
+        ),
+      );
+    }
+    return _buildInitialAvatar(initial);
+  }
+
+  Widget _buildInitialAvatar(String initial) {
+    return Text(
+      initial,
+      style: AppTypography.displaySmall.copyWith(
+        color: AppColors.primary,
+        fontWeight: FontWeight.bold,
+      ),
+    );
+  }
+
+  void _showPhotoSourceDialog(BuildContext context) {
+    HapticService.lightImpact();
+    final authCubit = context.read<AuthCubit>();
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
+      ),
+      builder: (dialogContext) {
+        return SafeArea(
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  margin: EdgeInsets.only(bottom: AppSpacing.md),
+                  decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                Text(
+                  'Change Profile Photo',
+                  style: AppTypography.titleMedium,
+                ),
+                SizedBox(height: AppSpacing.md),
+                ListTile(
+                  leading: Container(
+                    padding: EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.photo_library_outlined,
+                        color: AppColors.primary),
+                  ),
+                  title: Text('Choose from Gallery',
+                      style: AppTypography.bodyLarge),
+                  onTap: () {
+                    Navigator.pop(dialogContext);
+                    authCubit.pickProfilePhotoFromGallery();
+                  },
+                ),
+                ListTile(
+                  leading: Container(
+                    padding: EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.camera_alt_outlined,
+                        color: AppColors.primary),
+                  ),
+                  title: Text('Take a Photo', style: AppTypography.bodyLarge),
+                  onTap: () {
+                    Navigator.pop(dialogContext);
+                    authCubit.pickProfilePhotoFromCamera();
+                  },
+                ),
+                SizedBox(height: AppSpacing.sm),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 

@@ -8,6 +8,7 @@ class UserModel extends UserEntity {
     required super.uid,
     required super.email,
     super.displayName,
+    super.photoURL,
   });
 
   /// Creates a UserModel from Firebase User data.
@@ -16,6 +17,7 @@ class UserModel extends UserEntity {
       uid: data['uid'] as String,
       email: data['email'] as String,
       displayName: data['displayName'] as String?,
+      photoURL: data['photoURL'] as String?,
     );
   }
 
@@ -25,6 +27,7 @@ class UserModel extends UserEntity {
       uid: uid,
       email: email,
       displayName: displayName,
+      photoURL: photoURL,
     );
   }
 
@@ -34,6 +37,7 @@ class UserModel extends UserEntity {
       'uid': uid,
       'email': email,
       'displayName': displayName,
+      'photoURL': photoURL,
     };
   }
 }

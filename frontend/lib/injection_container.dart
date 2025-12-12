@@ -16,12 +16,14 @@ import 'features/daily_news/presentation/bloc/article/local/local_article_bloc.d
 
 // Auth feature imports
 import 'package:news_app_clean_architecture/features/auth/data/data_sources/firebase_auth_service.dart';
+import 'package:news_app_clean_architecture/features/auth/data/data_sources/profile_storage_service.dart';
 import 'package:news_app_clean_architecture/features/auth/data/repository/auth_repository_impl.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/repository/auth_repository.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/usecases/get_current_user.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/usecases/sign_in.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/usecases/sign_out.dart';
 import 'package:news_app_clean_architecture/features/auth/domain/usecases/sign_up.dart';
+import 'package:news_app_clean_architecture/features/auth/domain/usecases/update_profile_photo.dart';
 import 'package:news_app_clean_architecture/features/auth/presentation/bloc/auth_cubit.dart';
 
 // Firestore article feature imports
@@ -90,10 +92,11 @@ Future<void> initializeDependencies() async {
 
   // Auth Data Sources
   sl.registerSingleton<FirebaseAuthService>(FirebaseAuthService());
+  sl.registerSingleton<ProfileStorageService>(ProfileStorageService());
 
   // Auth Repository
   sl.registerSingleton<AuthRepository>(
-      AuthRepositoryImpl(sl<FirebaseAuthService>()));
+      AuthRepositoryImpl(sl<FirebaseAuthService>(), sl<ProfileStorageService>()));
 
   // Auth UseCases
   sl.registerSingleton<GetCurrentUserUseCase>(
@@ -105,12 +108,16 @@ Future<void> initializeDependencies() async {
 
   sl.registerSingleton<SignOutUseCase>(SignOutUseCase(sl<AuthRepository>()));
 
+  sl.registerSingleton<UpdateProfilePhotoUseCase>(
+      UpdateProfilePhotoUseCase(sl<AuthRepository>()));
+
   // Auth Cubit
   sl.registerFactory<AuthCubit>(() => AuthCubit(
         getCurrentUserUseCase: sl<GetCurrentUserUseCase>(),
         signInUseCase: sl<SignInUseCase>(),
         signUpUseCase: sl<SignUpUseCase>(),
         signOutUseCase: sl<SignOutUseCase>(),
+        updateProfilePhotoUseCase: sl<UpdateProfilePhotoUseCase>(),
       ));
 
   // ============================================

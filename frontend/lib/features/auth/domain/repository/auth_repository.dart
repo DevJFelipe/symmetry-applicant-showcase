@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import '../entities/user.dart';
 
 /// Abstract repository defining authentication operations.
@@ -25,6 +27,16 @@ abstract class AuthRepository {
 
   /// Signs out the current user.
   Future<void> signOut();
+
+  /// Updates the user's profile photo.
+  /// 
+  /// Uploads the image to storage, deletes the previous photo if exists,
+  /// and updates the user's photoURL in Firebase Auth.
+  /// Returns the updated user entity with the new photoURL.
+  Future<UserEntity> updateProfilePhoto({
+    required File imageFile,
+    required String userId,
+  });
 
   /// Stream of authentication state changes.
   Stream<UserEntity?> get authStateChanges;

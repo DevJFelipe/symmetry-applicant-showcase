@@ -52,3 +52,30 @@ class AuthError extends AuthState {
   @override
   List<Object?> get props => [message];
 }
+
+/// State while profile photo is being updated.
+class ProfilePhotoUpdating extends AuthState {
+  final UserEntity _user;
+
+  const ProfilePhotoUpdating(this._user);
+
+  @override
+  UserEntity? get user => _user;
+
+  @override
+  List<Object?> get props => [_user];
+}
+
+/// State when profile photo update fails.
+class ProfilePhotoError extends AuthState {
+  final UserEntity _user;
+  final String message;
+
+  const ProfilePhotoError(this._user, this.message);
+
+  @override
+  UserEntity? get user => _user;
+
+  @override
+  List<Object?> get props => [_user, message];
+}
