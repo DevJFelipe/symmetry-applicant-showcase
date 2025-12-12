@@ -238,7 +238,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _buildEmptyState(String message, IconData icon) {
     final theme = Theme.of(context);
-    final textMuted = theme.colorScheme.onSurface.withOpacity(0.5);
+    final textMuted = theme.colorScheme.onSurface.withValues(alpha: 0.5);
 
     return Column(
       children: [
@@ -500,7 +500,7 @@ class _ProfilePageState extends State<ProfilePage> {
     final theme = Theme.of(context);
     final color = isSelected
         ? theme.colorScheme.primary
-        : theme.colorScheme.onSurface.withOpacity(0.5);
+        : theme.colorScheme.onSurface.withValues(alpha: 0.5);
 
     return Expanded(
       child: InkWell(
@@ -642,7 +642,7 @@ class _ArticleListItem extends StatelessWidget {
 
   Widget _placeholder(ThemeData theme) => Center(
       child: Icon(Icons.image_outlined,
-          color: theme.colorScheme.onSurface.withOpacity(0.4), size: 32));
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.4), size: 32));
 
   Widget _buildContent(ThemeData theme) {
     return Column(

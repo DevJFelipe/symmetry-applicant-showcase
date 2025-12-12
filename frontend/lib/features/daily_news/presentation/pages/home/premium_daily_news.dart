@@ -146,7 +146,7 @@ class _PremiumDailyNewsState extends State<PremiumDailyNews>
           body = Text(
             'Pull to refresh',
             style: AppTypography.bodySmall.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.5),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
             ),
           );
         } else if (mode == RefreshStatus.refreshing) {
@@ -289,7 +289,7 @@ class _PremiumDailyNewsState extends State<PremiumDailyNews>
                   Text(
                     state.user?.email ?? '',
                     style: AppTypography.bodySmall.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.5),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                     ),
                   ),
                 ],

@@ -233,7 +233,7 @@ class _SavedArticleCard extends StatelessWidget {
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 8,
                 offset: const Offset(0, 4),
               ),
@@ -311,7 +311,7 @@ class _SavedArticleCard extends StatelessWidget {
                   color: theme.colorScheme.surfaceContainerHighest,
                   child: Icon(
                     Icons.image_not_supported_outlined,
-                    color: theme.colorScheme.onSurface.withOpacity(0.4),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
                     size: 24,
                   ),
                 ),
@@ -320,7 +320,7 @@ class _SavedArticleCard extends StatelessWidget {
                 color: theme.colorScheme.surfaceContainerHighest,
                 child: Icon(
                   Icons.article_outlined,
-                  color: theme.colorScheme.onSurface.withOpacity(0.4),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
                   size: 32,
                 ),
               ),
@@ -360,14 +360,14 @@ class _SavedArticleCard extends StatelessWidget {
         Icon(
           Icons.access_time_rounded,
           size: 14,
-          color: theme.colorScheme.onSurface.withOpacity(0.5),
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
         ),
         const SizedBox(width: 4),
         Expanded(
           child: Text(
             _formatDate(article.publishedAt),
             style: AppTypography.caption.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.5),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,

@@ -202,7 +202,7 @@ class _SettingsPageState extends State<SettingsPage> {
             child: Text(
               'Version 1.0.0',
               style: AppTypography.caption.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.5),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
               ),
             ),
           ).animate().fadeIn(duration: 300.ms, delay: 400.ms),
@@ -223,7 +223,7 @@ class _SettingsPageState extends State<SettingsPage> {
       child: Text(
         title.toUpperCase(),
         style: AppTypography.labelSmall.copyWith(
-          color: theme.colorScheme.onSurface.withOpacity(0.5),
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
           letterSpacing: 1.2,
         ),
       ),
@@ -275,7 +275,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 Text(
                   subtitle,
                   style: AppTypography.bodySmall.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.5),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                   ),
                 ),
               ],
@@ -338,7 +338,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             Icon(
               Icons.arrow_forward_ios_rounded,
-              color: theme.colorScheme.onSurface.withOpacity(0.5),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
               size: 16,
             ),
           ],

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:news_app_clean_architecture/injection_container.dart';
 
-import '../../features/auth/presentation/bloc/auth_cubit.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/daily_news/domain/entities/article.dart';
@@ -30,20 +29,10 @@ class AppRoutes {
         return _materialRoute(const PremiumDailyNews());
 
       case '/login':
-        return _materialRoute(
-          BlocProvider<AuthCubit>(
-            create: (_) => sl<AuthCubit>(),
-            child: const LoginPage(),
-          ),
-        );
+        return _materialRoute(const LoginPage());
 
       case '/register':
-        return _materialRoute(
-          BlocProvider<AuthCubit>(
-            create: (_) => sl<AuthCubit>(),
-            child: const RegisterPage(),
-          ),
-        );
+        return _materialRoute(const RegisterPage());
 
       case '/create-article':
         return _materialRoute(

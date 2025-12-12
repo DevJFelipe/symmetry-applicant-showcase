@@ -202,7 +202,7 @@ class _ReactionBarState extends State<ReactionBar> {
               style: AppTypography.labelSmall.copyWith(
                 color: isActive
                     ? _getReactionColor(reaction)
-                    : theme.colorScheme.onSurface.withOpacity(0.5),
+                    : theme.colorScheme.onSurface.withValues(alpha: 0.5),
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
               ),
             ),
@@ -341,7 +341,7 @@ class ReactionPicker extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.full),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha: 0.2),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),

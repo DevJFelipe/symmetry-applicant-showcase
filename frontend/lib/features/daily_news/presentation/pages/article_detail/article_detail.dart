@@ -168,7 +168,7 @@ class _PremiumArticleDetailState extends State<PremiumArticleDetail> {
                     child: Icon(
                       Icons.broken_image_outlined,
                       size: 64,
-                      color: theme.colorScheme.onSurface.withOpacity(0.5),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                     ),
                   ),
                 ),
@@ -179,7 +179,7 @@ class _PremiumArticleDetailState extends State<PremiumArticleDetail> {
                 child: Icon(
                   Icons.article_outlined,
                   size: 64,
-                  color: theme.colorScheme.onSurface.withOpacity(0.5),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                 ),
               ),
 
@@ -455,7 +455,7 @@ class _PremiumArticleDetailState extends State<PremiumArticleDetail> {
               Text(
                 date,
                 style: AppTypography.bodySmall.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.5),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                 ),
               ),
             ],
@@ -478,13 +478,13 @@ class _PremiumArticleDetailState extends State<PremiumArticleDetail> {
               Icon(
                 Icons.schedule_rounded,
                 size: 14,
-                color: theme.colorScheme.onSurface.withOpacity(0.5),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
               ),
               SizedBox(width: AppSpacing.xxs),
               Text(
                 _estimateReadingTime(),
                 style: AppTypography.labelSmall.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.5),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                 ),
               ),
             ],
@@ -529,7 +529,7 @@ class _PremiumArticleDetailState extends State<PremiumArticleDetail> {
                   Text(
                     widget.article.url ?? '',
                     style: AppTypography.bodySmall.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.5),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -581,8 +581,9 @@ class _PremiumArticleDetailState extends State<PremiumArticleDetail> {
             decoration: BoxDecoration(
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(
-                      0.2), // Keep shadow dark even in light mode for lift
+                  color: Colors.black.withValues(
+                      alpha:
+                          0.2), // Keep shadow dark even in light mode for lift
                   blurRadius: 20,
                   offset: const Offset(0, 8),
                 ),

@@ -347,8 +347,8 @@ class _StatItem extends StatelessWidget {
             style: AppTypography.titleLarge
                 .copyWith(color: theme.colorScheme.onSurface)),
         Text(label,
-            style: AppTypography.labelSmall
-                .copyWith(color: theme.colorScheme.onSurface.withOpacity(0.5))),
+            style: AppTypography.labelSmall.copyWith(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.5))),
       ],
     );
   }
@@ -406,7 +406,7 @@ class _ArticleListItem extends StatelessWidget {
 
   Widget _placeholder(ThemeData theme) => Center(
       child: Icon(Icons.image_outlined,
-          color: theme.colorScheme.onSurface.withOpacity(0.5), size: 32));
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.5), size: 32));
 
   Widget _buildContent(ThemeData theme) {
     return Column(
@@ -419,8 +419,8 @@ class _ArticleListItem extends StatelessWidget {
             overflow: TextOverflow.ellipsis),
         SizedBox(height: AppSpacing.xs),
         Text(_formatDate(article.publishedAt),
-            style: AppTypography.bodySmall
-                .copyWith(color: theme.colorScheme.onSurface.withOpacity(0.5))),
+            style: AppTypography.bodySmall.copyWith(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.5))),
         SizedBox(height: AppSpacing.sm),
         Row(
           children: [
@@ -450,7 +450,7 @@ class _ArticleListItem extends StatelessWidget {
   Widget _buildActionsMenu(ThemeData theme) {
     return PopupMenuButton<String>(
       icon: Icon(Icons.more_vert_rounded,
-          color: theme.colorScheme.onSurface.withOpacity(0.5), size: 20),
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.5), size: 20),
       shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.md)),
       color: theme.cardColor,
@@ -525,11 +525,12 @@ class _MetricChip extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon,
-            size: 14, color: theme.colorScheme.onSurface.withOpacity(0.5)),
+            size: 14,
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
         SizedBox(width: AppSpacing.xxs),
         Text(value,
-            style: AppTypography.labelSmall
-                .copyWith(color: theme.colorScheme.onSurface.withOpacity(0.5))),
+            style: AppTypography.labelSmall.copyWith(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.5))),
       ],
     );
   }

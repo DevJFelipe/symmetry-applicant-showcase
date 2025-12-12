@@ -163,18 +163,19 @@ class _SearchPageState extends State<SearchPage> {
         onSubmitted: _onSearchSubmitted,
         decoration: InputDecoration(
           hintText: 'Search articles...',
-          hintStyle: AppTypography.bodyMedium
-              .copyWith(color: theme.colorScheme.onSurface.withOpacity(0.5)),
+          hintStyle: AppTypography.bodyMedium.copyWith(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
           border: InputBorder.none,
           contentPadding: EdgeInsets.symmetric(
               horizontal: AppSpacing.md, vertical: AppSpacing.sm),
           prefixIcon: Icon(Icons.search_rounded,
-              color: theme.colorScheme.onSurface.withOpacity(0.5), size: 20),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+              size: 20),
           suffixIcon: _searchController.text.isNotEmpty
               ? IconButton(
                   onPressed: _clearSearch,
                   icon: Icon(Icons.close_rounded,
-                      color: theme.colorScheme.onSurface.withOpacity(0.5),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                       size: 18),
                 )
               : null,
@@ -381,7 +382,8 @@ class _SearchChip extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon,
-                size: 16, color: theme.colorScheme.onSurface.withOpacity(0.5)),
+                size: 16,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
             SizedBox(width: AppSpacing.xs),
             Text(label,
                 style: AppTypography.bodyMedium
@@ -461,7 +463,8 @@ class _SearchArticleItem extends StatelessWidget {
                         style: AppTypography.labelSmall.copyWith(
                           color: article.documentId != null
                               ? theme.colorScheme.primary
-                              : theme.colorScheme.onSurface.withOpacity(0.5),
+                              : theme.colorScheme.onSurface
+                                  .withValues(alpha: 0.5),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -506,7 +509,7 @@ class _SearchArticleItem extends StatelessWidget {
       height: 80,
       color: theme.colorScheme.surfaceContainerHighest,
       child: Icon(Icons.article_outlined,
-          color: theme.colorScheme.onSurface.withOpacity(0.5), size: 32),
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.5), size: 32),
     );
   }
 }

@@ -96,7 +96,7 @@ class _EditArticlePageState extends State<EditArticlePage> {
                 'Save',
                 style: AppTypography.titleSmall.copyWith(
                   color: isLoading
-                      ? theme.colorScheme.onSurface.withOpacity(0.5)
+                      ? theme.colorScheme.onSurface.withValues(alpha: 0.5)
                       : theme.colorScheme.primary,
                 ),
               ),
@@ -119,7 +119,7 @@ class _EditArticlePageState extends State<EditArticlePage> {
           Text(
             message,
             style: AppTypography.bodyMedium.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.5),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
             ),
           ),
         ],
@@ -347,13 +347,13 @@ class _EditArticlePageState extends State<EditArticlePage> {
           Icon(
             Icons.image_outlined,
             size: 48,
-            color: theme.colorScheme.onSurface.withOpacity(0.5),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
           ),
           SizedBox(height: AppSpacing.sm),
           Text(
             'No image',
             style: AppTypography.bodySmall.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.5),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
             ),
           ),
         ],
@@ -392,7 +392,7 @@ class _EditArticlePageState extends State<EditArticlePage> {
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: AppTypography.bodyMedium.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.5),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
             ),
             filled: true,
             fillColor: theme.cardColor,
@@ -415,7 +415,7 @@ class _EditArticlePageState extends State<EditArticlePage> {
             ),
             contentPadding: EdgeInsets.all(AppSpacing.md),
             counterStyle: AppTypography.labelSmall.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.5),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
             ),
           ),
           validator: validator,
