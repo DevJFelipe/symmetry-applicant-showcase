@@ -6,6 +6,7 @@ import 'package:news_app_clean_architecture/config/theme/app_typography.dart';
 import 'package:news_app_clean_architecture/config/theme/app_radius.dart';
 import 'package:news_app_clean_architecture/core/services/haptic_service.dart';
 import 'package:news_app_clean_architecture/features/daily_news/domain/entities/article.dart';
+import 'package:news_app_clean_architecture/features/daily_news/presentation/widgets/emoji_explosion.dart';
 
 /// A horizontal bar showing reaction buttons with counts.
 ///
@@ -30,6 +31,9 @@ class ReactionBar extends StatefulWidget {
   /// Whether to show the bar in compact mode.
   final bool compact;
 
+  /// Whether to show explosion animation when reaction is toggled.
+  final bool showExplosionAnimation;
+
   const ReactionBar({
     super.key,
     required this.reactions,
@@ -37,6 +41,7 @@ class ReactionBar extends StatefulWidget {
     this.currentUserId,
     this.onReactionToggled,
     this.compact = false,
+    this.showExplosionAnimation = true,
   });
 
   @override
@@ -56,7 +61,7 @@ class _ReactionBarState extends State<ReactionBar> {
     return widget.reactions[reaction.name] ?? 0;
   }
 
-  void _onReactionTap(ArticleReaction reaction) {
+  void _onReactionTap(ArticleReaction reaction, [TapUpDetails? details]) {
     final isActive = _hasUserReacted(reaction);
 
     // Trigger animation
@@ -66,6 +71,16 @@ class _ReactionBarState extends State<ReactionBar> {
 
     // Haptic feedback
     HapticService.reaction();
+
+    // Show explosion animation if enabled and adding reaction
+    if (widget.showExplosionAnimation && !isActive && details != null) {
+      EmojiExplosionOverlay.show(
+        context: context,
+        reaction: reaction,
+        position: details.globalPosition,
+        particleCount: 10,
+      );
+    }
 
     // Callback - the cubit handles single-reaction logic
     widget.onReactionToggled?.call(reaction, !isActive);
@@ -146,7 +161,7 @@ class _ReactionBarState extends State<ReactionBar> {
     final isAnimating = _animatingReactions.contains(reaction);
 
     return GestureDetector(
-      onTap: () => _onReactionTap(reaction),
+      onTapUp: (details) => _onReactionTap(reaction, details),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: EdgeInsets.symmetric(
@@ -195,7 +210,7 @@ class _ReactionBarState extends State<ReactionBar> {
     final isAnimating = _animatingReactions.contains(reaction);
 
     return GestureDetector(
-      onTap: () => _onReactionTap(reaction),
+      onTapUp: (details) => _onReactionTap(reaction, details),
       child: Container(
         padding: EdgeInsets.symmetric(
           horizontal: AppSpacing.sm,

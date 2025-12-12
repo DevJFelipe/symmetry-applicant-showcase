@@ -73,8 +73,5 @@ abstract class FirestoreArticleRepository {
     required String reactionType,
     required bool add,
   });
-  
-  /// Searches articles by title or description.
-  Future<List<ArticleEntity>> searchArticles(String query);
 }
 

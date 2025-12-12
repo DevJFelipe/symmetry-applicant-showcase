@@ -24,14 +24,6 @@ class ToggleReactionParams {
   });
 }
 
-/// Parameters for searching articles.
-class SearchArticlesParams {
-  /// The search query string.
-  final String query;
-
-  const SearchArticlesParams({required this.query});
-}
-
 /// Parameters for updating an article.
 class UpdateArticleParams {
   /// The ID of the article to update.

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:news_app_clean_architecture/config/theme/app_colors.dart';
+import 'package:news_app_clean_architecture/config/theme/app_radius.dart';
 import 'package:news_app_clean_architecture/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article/create/create_article_cubit.dart';
 
@@ -120,16 +122,16 @@ class _CreateArticlePageState extends State<CreateArticlePage> {
             height: 200,
             width: double.infinity,
             decoration: BoxDecoration(
-              color: Colors.grey[200],
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey[400]!),
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              border: Border.all(color: AppColors.border),
             ),
             child: selectedImage != null
                 ? Stack(
                     fit: StackFit.expand,
                     children: [
                       ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
                         child: Image.file(
                           selectedImage,
                           fit: BoxFit.cover,
@@ -162,13 +164,13 @@ class _CreateArticlePageState extends State<CreateArticlePage> {
                       Icon(
                         Icons.add_photo_alternate_outlined,
                         size: 48,
-                        color: Colors.grey[600],
+                        color: AppColors.textMuted,
                       ),
                       const SizedBox(height: 8),
                       Text(
                         'Tap to add thumbnail',
                         style: TextStyle(
-                          color: Colors.grey[600],
+                          color: AppColors.textMuted,
                           fontSize: 14,
                         ),
                       ),

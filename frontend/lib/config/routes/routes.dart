@@ -8,6 +8,8 @@ import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/daily_news/domain/entities/article.dart';
 import '../../features/daily_news/presentation/bloc/article/create/create_article_cubit.dart';
 import '../../features/daily_news/presentation/bloc/article/edit/edit_article_cubit.dart';
+import '../../features/daily_news/presentation/bloc/article/local/local_article_bloc.dart';
+import '../../features/daily_news/presentation/bloc/article/local/local_article_event.dart';
 import '../../features/daily_news/presentation/bloc/article_detail/article_detail_cubit.dart';
 import '../../features/daily_news/presentation/bloc/search/search_cubit.dart';
 import '../../features/daily_news/presentation/bloc/my_articles/my_articles_cubit.dart';
@@ -20,7 +22,6 @@ import '../../features/daily_news/presentation/pages/profile/profile_page.dart';
 import '../../features/daily_news/presentation/pages/saved_article/saved_article.dart';
 import '../../features/daily_news/presentation/pages/search/search_page.dart';
 import '../../features/daily_news/presentation/pages/settings/settings_page.dart';
-
 
 class AppRoutes {
   static Route onGenerateRoutes(RouteSettings settings) {
@@ -73,7 +74,13 @@ class AppRoutes {
         );
 
       case '/profile':
-        return _materialRoute(const ProfilePage());
+        return _materialRoute(
+          BlocProvider<LocalArticleBloc>(
+            create: (_) =>
+                sl<LocalArticleBloc>()..add(const GetSavedArticles()),
+            child: const ProfilePage(),
+          ),
+        );
 
       case '/my-articles':
         return _materialRoute(
@@ -94,7 +101,7 @@ class AppRoutes {
 
       case '/settings':
         return _materialRoute(const SettingsPage());
-        
+
       default:
         return _materialRoute(const PremiumDailyNews());
     }
@@ -104,4 +111,3 @@ class AppRoutes {
     return MaterialPageRoute(builder: (_) => view);
   }
 }
-

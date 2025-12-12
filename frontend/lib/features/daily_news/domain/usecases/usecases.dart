@@ -6,7 +6,6 @@ export 'get_saved_article.dart';
 export 'get_user_articles.dart';
 export 'remove_article.dart';
 export 'save_article.dart';
-export 'search_articles.dart';
 export 'toggle_reaction.dart';
 export 'update_article.dart';
 

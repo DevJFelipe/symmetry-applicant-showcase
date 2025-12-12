@@ -142,11 +142,5 @@ class FirestoreArticleRepositoryImpl implements FirestoreArticleRepository {
     );
     return updatedModel.toEntity();
   }
-
-  @override
-  Future<List<ArticleEntity>> searchArticles(String query) async {
-    final models = await _articleService.searchArticles(query);
-    return models.map((model) => model.toEntity()).toList();
-  }
 }
 

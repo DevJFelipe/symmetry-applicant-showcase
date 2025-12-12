@@ -11,7 +11,6 @@ import 'package:news_app_clean_architecture/features/auth/presentation/bloc/auth
 import 'package:news_app_clean_architecture/features/daily_news/domain/entities/article.dart';
 import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/search/search_cubit.dart';
 import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/search/search_state.dart';
-import 'package:news_app_clean_architecture/features/daily_news/presentation/widgets/animated_bento_card.dart';
 import 'package:news_app_clean_architecture/shared/widgets/widgets.dart';
 
 /// Search page for finding articles.
@@ -28,7 +27,7 @@ class SearchPage extends StatefulWidget {
 class _SearchPageState extends State<SearchPage> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocus = FocusNode();
-  
+
   /// Locally stored recent searches (could be persisted with SharedPreferences).
   List<String> _recentSearches = ['Flutter', 'Technology', 'Science'];
 
@@ -36,9 +35,9 @@ class _SearchPageState extends State<SearchPage> {
   void initState() {
     super.initState();
     _searchController.addListener(_onSearchChanged);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _searchFocus.requestFocus();
-    });
+    // Load initial articles when page opens
+    final userId = context.read<AuthCubit>().state.user?.uid;
+    context.read<SearchCubit>().loadInitialArticles(userId: userId);
   }
 
   @override
@@ -55,7 +54,7 @@ class _SearchPageState extends State<SearchPage> {
 
   void _onSearchSubmitted(String query) {
     if (query.isEmpty) return;
-    
+
     HapticService.lightImpact();
     _addToRecentSearches(query);
     context.read<SearchCubit>().searchImmediate(query);
@@ -122,7 +121,8 @@ class _SearchPageState extends State<SearchPage> {
         children: [
           IconButton(
             onPressed: () => Navigator.pop(context),
-            icon: Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary, size: 20),
+            icon: Icon(Icons.arrow_back_ios_new_rounded,
+                color: AppColors.textPrimary, size: 20),
           ),
           Expanded(child: _buildSearchField()),
         ],
@@ -149,14 +149,18 @@ class _SearchPageState extends State<SearchPage> {
         onSubmitted: _onSearchSubmitted,
         decoration: InputDecoration(
           hintText: 'Search articles...',
-          hintStyle: AppTypography.bodyMedium.copyWith(color: AppColors.textMuted),
+          hintStyle:
+              AppTypography.bodyMedium.copyWith(color: AppColors.textMuted),
           border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
-          prefixIcon: Icon(Icons.search_rounded, color: AppColors.textMuted, size: 20),
+          contentPadding: EdgeInsets.symmetric(
+              horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+          prefixIcon:
+              Icon(Icons.search_rounded, color: AppColors.textMuted, size: 20),
           suffixIcon: _searchController.text.isNotEmpty
               ? IconButton(
                   onPressed: _clearSearch,
-                  icon: Icon(Icons.close_rounded, color: AppColors.textMuted, size: 18),
+                  icon: Icon(Icons.close_rounded,
+                      color: AppColors.textMuted, size: 18),
                 )
               : null,
         ),
@@ -166,10 +170,15 @@ class _SearchPageState extends State<SearchPage> {
 
   Widget _buildContent(SearchState state) {
     return switch (state) {
-      SearchInitial() => _buildSuggestions(),
+      SearchInitial(:final userArticles, :final apiArticles) =>
+        userArticles.isEmpty && apiArticles.isEmpty
+            ? _buildSuggestions()
+            : _buildArticleList(userArticles, apiArticles),
       SearchLoading() => _buildLoadingState(),
-      SearchSuccess(:final articles, :final query) => 
-        articles.isEmpty ? _buildNoResults(query) : _buildSearchResults(articles),
+      SearchSuccess(:final userArticles, :final apiArticles, :final query) =>
+        userArticles.isEmpty && apiArticles.isEmpty
+            ? _buildNoResults(query)
+            : _buildArticleList(userArticles, apiArticles, isSearch: true),
       SearchError(:final message) => _buildErrorState(message),
     };
   }
@@ -191,24 +200,50 @@ class _SearchPageState extends State<SearchPage> {
     );
   }
 
-  Widget _buildSearchResults(List<ArticleEntity> results) {
+  Widget _buildArticleList(
+    List<ArticleEntity> userArticles,
+    List<ArticleEntity> apiArticles, {
+    bool isSearch = false,
+  }) {
     final currentUserId = context.read<AuthCubit>().state.user?.uid;
-
-    return ListView.builder(
+    
+    return ListView(
       padding: EdgeInsets.all(AppSpacing.screenPaddingH),
-      itemCount: results.length,
-      itemBuilder: (context, index) {
-        return Padding(
-          padding: EdgeInsets.only(bottom: AppSpacing.md),
-          child: AnimatedBentoCard(
-            article: results[index],
-            size: BentoCardSize.medium,
-            index: index,
-            currentUserId: currentUserId,
-            onTap: () => _onArticleTapped(results[index]),
-          ),
-        );
-      },
+      children: [
+        // User articles section
+        if (userArticles.isNotEmpty) ...[
+          _buildSectionHeader(isSearch ? 'Your Articles' : 'My Articles'),
+          SizedBox(height: AppSpacing.sm),
+          ...userArticles.asMap().entries.map((entry) {
+            return Padding(
+              padding: EdgeInsets.only(bottom: AppSpacing.md),
+              child: _SearchArticleItem(
+                article: entry.value,
+                index: entry.key,
+                currentUserId: currentUserId,
+                onTap: () => _onArticleTapped(entry.value),
+              ),
+            );
+          }),
+          SizedBox(height: AppSpacing.lg),
+        ],
+        // API articles section
+        if (apiArticles.isNotEmpty) ...[
+          _buildSectionHeader(isSearch ? 'News Articles' : 'Latest News'),
+          SizedBox(height: AppSpacing.sm),
+          ...apiArticles.asMap().entries.map((entry) {
+            return Padding(
+              padding: EdgeInsets.only(bottom: AppSpacing.md),
+              child: _SearchArticleItem(
+                article: entry.value,
+                index: entry.key + userArticles.length,
+                currentUserId: currentUserId,
+                onTap: () => _onArticleTapped(entry.value),
+              ),
+            );
+          }),
+        ],
+      ],
     );
   }
 
@@ -229,7 +264,8 @@ class _SearchPageState extends State<SearchPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (_recentSearches.isNotEmpty) ...[
-            _buildSectionHeader('Recent Searches', onClear: _clearRecentSearches),
+            _buildSectionHeader('Recent Searches',
+                onClear: _clearRecentSearches),
             SizedBox(height: AppSpacing.sm),
             _buildChipsWrap(_recentSearches, Icons.history_rounded),
             SizedBox(height: AppSpacing.xl),
@@ -237,7 +273,14 @@ class _SearchPageState extends State<SearchPage> {
           _buildSectionHeader('Suggested Topics'),
           SizedBox(height: AppSpacing.sm),
           _buildChipsWrap(
-            ['Technology', 'Science', 'Business', 'Health', 'Sports', 'Entertainment'],
+            [
+              'Technology',
+              'Science',
+              'Business',
+              'Health',
+              'Sports',
+              'Entertainment'
+            ],
             Icons.tag_rounded,
             startDelay: 200,
           ),
@@ -250,17 +293,22 @@ class _SearchPageState extends State<SearchPage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(title, style: AppTypography.titleSmall.copyWith(color: AppColors.textSecondary)),
+        Text(title,
+            style: AppTypography.titleSmall
+                .copyWith(color: AppColors.textSecondary)),
         if (onClear != null)
           TextButton(
             onPressed: onClear,
-            child: Text('Clear', style: AppTypography.labelMedium.copyWith(color: AppColors.accent)),
+            child: Text('Clear',
+                style: AppTypography.labelMedium
+                    .copyWith(color: AppColors.accent)),
           ),
       ],
     );
   }
 
-  Widget _buildChipsWrap(List<String> items, IconData icon, {int startDelay = 0}) {
+  Widget _buildChipsWrap(List<String> items, IconData icon,
+      {int startDelay = 0}) {
     return Wrap(
       spacing: AppSpacing.sm,
       runSpacing: AppSpacing.sm,
@@ -270,9 +318,9 @@ class _SearchPageState extends State<SearchPage> {
           icon: icon,
           onTap: () => _onRecentSearchTapped(entry.value),
         ).animate().fadeIn(
-          duration: 300.ms,
-          delay: Duration(milliseconds: startDelay + entry.key * 50),
-        );
+              duration: 300.ms,
+              delay: Duration(milliseconds: startDelay + entry.key * 50),
+            );
       }).toList(),
     );
   }
@@ -300,7 +348,8 @@ class _SearchChip extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+        padding: EdgeInsets.symmetric(
+            horizontal: AppSpacing.md, vertical: AppSpacing.sm),
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(AppRadius.full),
@@ -311,10 +360,126 @@ class _SearchChip extends StatelessWidget {
           children: [
             Icon(icon, size: 16, color: AppColors.textMuted),
             SizedBox(width: AppSpacing.xs),
-            Text(label, style: AppTypography.bodyMedium.copyWith(color: AppColors.textSecondary)),
+            Text(label,
+                style: AppTypography.bodyMedium
+                    .copyWith(color: AppColors.textSecondary)),
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Simple article list item for search results.
+class _SearchArticleItem extends StatelessWidget {
+  final ArticleEntity article;
+  final int index;
+  final String? currentUserId;
+  final VoidCallback onTap;
+
+  const _SearchArticleItem({
+    required this.article,
+    required this.index,
+    required this.onTap,
+    this.currentUserId,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: Border.all(color: AppColors.border, width: 1),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Thumbnail
+            ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              child: article.urlToImage != null
+                  ? Image.network(
+                      article.urlToImage!,
+                      width: 80,
+                      height: 80,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => _buildPlaceholder(),
+                    )
+                  : _buildPlaceholder(),
+            ),
+            SizedBox(width: AppSpacing.md),
+            // Content
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Source/Author badge
+                  if (article.source?.name != null || article.author != null)
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: AppSpacing.sm,
+                        vertical: AppSpacing.xs / 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: article.documentId != null
+                            ? AppColors.accent.withValues(alpha: 0.1)
+                            : AppColors.surfaceLight,
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                      ),
+                      child: Text(
+                        article.documentId != null
+                            ? (article.author ?? 'You')
+                            : (article.source?.name ?? ''),
+                        style: AppTypography.labelSmall.copyWith(
+                          color: article.documentId != null
+                              ? AppColors.accent
+                              : AppColors.textMuted,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  SizedBox(height: AppSpacing.xs),
+                  // Title
+                  Text(
+                    article.title ?? 'Untitled',
+                    style: AppTypography.titleSmall,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  SizedBox(height: AppSpacing.xs),
+                  // Description
+                  if (article.description != null)
+                    Text(
+                      article.description!,
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    ).animate().fadeIn(
+          duration: 300.ms,
+          delay: Duration(milliseconds: index * 50),
+        );
+  }
+
+  Widget _buildPlaceholder() {
+    return Container(
+      width: 80,
+      height: 80,
+      color: AppColors.surfaceLight,
+      child: Icon(Icons.article_outlined, color: AppColors.textMuted, size: 32),
     );
   }
 }

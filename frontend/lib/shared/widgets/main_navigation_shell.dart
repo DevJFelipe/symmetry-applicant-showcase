@@ -9,14 +9,17 @@ import 'package:news_app_clean_architecture/features/daily_news/presentation/blo
 import 'package:news_app_clean_architecture/features/daily_news/presentation/pages/home/premium_daily_news.dart';
 import 'package:news_app_clean_architecture/features/daily_news/presentation/pages/my_articles/my_articles_page.dart';
 import 'package:news_app_clean_architecture/features/daily_news/presentation/pages/profile/profile_page.dart';
+import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article/local/local_article_bloc.dart';
+import 'package:news_app_clean_architecture/features/daily_news/presentation/bloc/article/local/local_article_event.dart';
+import 'package:news_app_clean_architecture/injection_container.dart';
 
 /// Main navigation shell that provides bottom navigation for the app.
-/// 
+///
 /// Contains three main tabs:
 /// - Feed (Home) - News feed with Bento Grid
 /// - My Articles - User's own articles
 /// - Profile - User profile and settings
-/// 
+///
 /// Uses [IndexedStack] to preserve state when switching tabs.
 class MainNavigationShell extends StatefulWidget {
   const MainNavigationShell({super.key});
@@ -27,33 +30,41 @@ class MainNavigationShell extends StatefulWidget {
 
 class _MainNavigationShellState extends State<MainNavigationShell> {
   int _currentIndex = 0;
-  
+
   /// Pages for each navigation tab.
   /// Using late final to defer initialization until build.
   late final List<Widget> _pages;
-  
+
   @override
   void initState() {
     super.initState();
-    _pages = const [
-      PremiumDailyNews(),
-      MyArticlesPage(),
-      ProfilePage(),
+    _pages = [
+      const PremiumDailyNews(),
+      const MyArticlesPage(),
+      MultiBlocProvider(
+        providers: [
+          BlocProvider<LocalArticleBloc>(
+            create: (_) =>
+                sl<LocalArticleBloc>()..add(const GetSavedArticles()),
+          ),
+        ],
+        child: const ProfilePage(),
+      ),
     ];
   }
 
   void _onTabTapped(int index) {
     if (index == _currentIndex) return;
-    
+
     HapticService.selectionClick();
     setState(() => _currentIndex = index);
-    
+
     // Load user articles when switching to My Articles tab
     if (index == 1) {
       _loadUserArticles();
     }
   }
-  
+
   void _loadUserArticles() {
     final authState = context.read<AuthCubit>().state;
     if (authState is AuthAuthenticated && authState.user != null) {
@@ -135,7 +146,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     required String label,
   }) {
     final isSelected = _currentIndex == index;
-    
+
     return GestureDetector(
       onTap: () => _onTabTapped(index),
       behavior: HitTestBehavior.opaque,
@@ -146,7 +157,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
           vertical: AppSpacing.sm,
         ),
         decoration: BoxDecoration(
-          color: isSelected 
+          color: isSelected
               ? AppColors.primary.withValues(alpha: 0.15)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(AppSpacing.lg),

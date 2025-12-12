@@ -31,7 +31,6 @@ import 'package:news_app_clean_architecture/features/daily_news/data/repository/
 import 'package:news_app_clean_architecture/features/daily_news/domain/repository/firestore_article_repository.dart';
 import 'package:news_app_clean_architecture/features/daily_news/domain/usecases/create_article.dart';
 import 'package:news_app_clean_architecture/features/daily_news/domain/usecases/toggle_reaction.dart';
-import 'package:news_app_clean_architecture/features/daily_news/domain/usecases/search_articles.dart';
 import 'package:news_app_clean_architecture/features/daily_news/domain/usecases/get_user_articles.dart';
 import 'package:news_app_clean_architecture/features/daily_news/domain/usecases/delete_article.dart';
 import 'package:news_app_clean_architecture/features/daily_news/domain/usecases/update_article.dart';
@@ -44,59 +43,46 @@ import 'package:news_app_clean_architecture/features/daily_news/presentation/blo
 final sl = GetIt.instance;
 
 Future<void> initializeDependencies() async {
-
   // ============================================
   // Core Services
   // ============================================
-  
+
   // Preferences Service (must be initialized first - async)
   final sharedPreferences = await SharedPreferences.getInstance();
-  sl.registerSingleton<PreferencesService>(PreferencesService(sharedPreferences));
+  sl.registerSingleton<PreferencesService>(
+      PreferencesService(sharedPreferences));
 
-  final database = await $FloorAppDatabase.databaseBuilder('app_database.db').build();
+  final database =
+      await $FloorAppDatabase.databaseBuilder('app_database.db').build();
   sl.registerSingleton<AppDatabase>(database);
-  
+
   // Dio
   sl.registerSingleton<Dio>(Dio());
 
   // Dependencies
   sl.registerSingleton<NewsApiService>(NewsApiService(sl()));
 
-  sl.registerSingleton<ArticleRepository>(
-    ArticleRepositoryImpl(sl(),sl())
-  );
-  
+  sl.registerSingleton<ArticleRepository>(ArticleRepositoryImpl(sl(), sl()));
+
   //UseCases
-  sl.registerSingleton<GetArticleUseCase>(
-    GetArticleUseCase(sl())
-  );
+  sl.registerSingleton<GetArticleUseCase>(GetArticleUseCase(sl()));
 
-  sl.registerSingleton<GetSavedArticleUseCase>(
-    GetSavedArticleUseCase(sl())
-  );
+  sl.registerSingleton<GetSavedArticleUseCase>(GetSavedArticleUseCase(sl()));
 
-  sl.registerSingleton<SaveArticleUseCase>(
-    SaveArticleUseCase(sl())
-  );
-  
-  sl.registerSingleton<RemoveArticleUseCase>(
-    RemoveArticleUseCase(sl())
-  );
+  sl.registerSingleton<SaveArticleUseCase>(SaveArticleUseCase(sl()));
 
+  sl.registerSingleton<RemoveArticleUseCase>(RemoveArticleUseCase(sl()));
 
   //Blocs
   // Note: RemoteArticlesBloc depends on ReactionService via GetExternalReactionsUseCase
   // which is registered later, so we use sl.call() to defer resolution
-  sl.registerFactory<RemoteArticlesBloc>(
-    ()=> RemoteArticlesBloc(
-      sl<GetArticleUseCase>(),
-      sl<GetExternalReactionsUseCase>(),
-    )
-  );
+  sl.registerFactory<RemoteArticlesBloc>(() => RemoteArticlesBloc(
+        sl<GetArticleUseCase>(),
+        sl<GetExternalReactionsUseCase>(),
+      ));
 
   sl.registerFactory<LocalArticleBloc>(
-    ()=> LocalArticleBloc(sl(),sl(),sl())
-  );
+      () => LocalArticleBloc(sl(), sl(), sl()));
 
   // ============================================
   // Auth Feature
@@ -107,35 +93,25 @@ Future<void> initializeDependencies() async {
 
   // Auth Repository
   sl.registerSingleton<AuthRepository>(
-    AuthRepositoryImpl(sl<FirebaseAuthService>())
-  );
+      AuthRepositoryImpl(sl<FirebaseAuthService>()));
 
   // Auth UseCases
   sl.registerSingleton<GetCurrentUserUseCase>(
-    GetCurrentUserUseCase(sl<AuthRepository>())
-  );
+      GetCurrentUserUseCase(sl<AuthRepository>()));
 
-  sl.registerSingleton<SignInUseCase>(
-    SignInUseCase(sl<AuthRepository>())
-  );
+  sl.registerSingleton<SignInUseCase>(SignInUseCase(sl<AuthRepository>()));
 
-  sl.registerSingleton<SignUpUseCase>(
-    SignUpUseCase(sl<AuthRepository>())
-  );
+  sl.registerSingleton<SignUpUseCase>(SignUpUseCase(sl<AuthRepository>()));
 
-  sl.registerSingleton<SignOutUseCase>(
-    SignOutUseCase(sl<AuthRepository>())
-  );
+  sl.registerSingleton<SignOutUseCase>(SignOutUseCase(sl<AuthRepository>()));
 
   // Auth Cubit
-  sl.registerFactory<AuthCubit>(
-    () => AuthCubit(
-      getCurrentUserUseCase: sl<GetCurrentUserUseCase>(),
-      signInUseCase: sl<SignInUseCase>(),
-      signUpUseCase: sl<SignUpUseCase>(),
-      signOutUseCase: sl<SignOutUseCase>(),
-    )
-  );
+  sl.registerFactory<AuthCubit>(() => AuthCubit(
+        getCurrentUserUseCase: sl<GetCurrentUserUseCase>(),
+        signInUseCase: sl<SignInUseCase>(),
+        signUpUseCase: sl<SignUpUseCase>(),
+        signOutUseCase: sl<SignOutUseCase>(),
+      ));
 
   // ============================================
   // Firestore Article Feature
@@ -149,73 +125,51 @@ Future<void> initializeDependencies() async {
 
   // Firestore Repository
   sl.registerSingleton<FirestoreArticleRepository>(
-    FirestoreArticleRepositoryImpl(sl<FirestoreArticleService>())
-  );
+      FirestoreArticleRepositoryImpl(sl<FirestoreArticleService>()));
 
   // Firestore UseCases
   sl.registerSingleton<CreateArticleUseCase>(
-    CreateArticleUseCase(sl<FirestoreArticleRepository>())
-  );
-  
+      CreateArticleUseCase(sl<FirestoreArticleRepository>()));
+
   sl.registerSingleton<ToggleReactionUseCase>(
-    ToggleReactionUseCase(sl<FirestoreArticleRepository>())
-  );
-  
-  sl.registerSingleton<SearchArticlesUseCase>(
-    SearchArticlesUseCase(sl<FirestoreArticleRepository>())
-  );
-  
+      ToggleReactionUseCase(sl<FirestoreArticleRepository>()));
+
   sl.registerSingleton<GetUserArticlesUseCase>(
-    GetUserArticlesUseCase(sl<FirestoreArticleRepository>())
-  );
-  
+      GetUserArticlesUseCase(sl<FirestoreArticleRepository>()));
+
   sl.registerSingleton<DeleteArticleUseCase>(
-    DeleteArticleUseCase(sl<FirestoreArticleRepository>())
-  );
-  
+      DeleteArticleUseCase(sl<FirestoreArticleRepository>()));
+
   sl.registerSingleton<UpdateArticleUseCase>(
-    UpdateArticleUseCase(sl<FirestoreArticleRepository>())
-  );
-  
+      UpdateArticleUseCase(sl<FirestoreArticleRepository>()));
+
   sl.registerSingleton<GetExternalReactionsUseCase>(
-    GetExternalReactionsUseCase(sl<ReactionService>())
-  );
+      GetExternalReactionsUseCase(sl<ReactionService>()));
 
   // Create Article Cubit
-  sl.registerFactory<CreateArticleCubit>(
-    () => CreateArticleCubit(
-      createArticleUseCase: sl<CreateArticleUseCase>(),
-    )
-  );
+  sl.registerFactory<CreateArticleCubit>(() => CreateArticleCubit(
+        createArticleUseCase: sl<CreateArticleUseCase>(),
+      ));
 
   // My Articles Cubit
-  sl.registerFactory<MyArticlesCubit>(
-    () => MyArticlesCubit(
-      getUserArticlesUseCase: sl<GetUserArticlesUseCase>(),
-      deleteArticleUseCase: sl<DeleteArticleUseCase>(),
-    )
-  );
+  sl.registerFactory<MyArticlesCubit>(() => MyArticlesCubit(
+        getUserArticlesUseCase: sl<GetUserArticlesUseCase>(),
+        deleteArticleUseCase: sl<DeleteArticleUseCase>(),
+      ));
 
   // Search Cubit
-  sl.registerFactory<SearchCubit>(
-    () => SearchCubit(
-      searchArticlesUseCase: sl<SearchArticlesUseCase>(),
-    )
-  );
+  sl.registerFactory<SearchCubit>(() => SearchCubit(
+        getUserArticlesUseCase: sl<GetUserArticlesUseCase>(),
+        getArticleUseCase: sl<GetArticleUseCase>(),
+      ));
 
   // Article Detail Cubit (for reactions)
-  sl.registerFactory<ArticleDetailCubit>(
-    () => ArticleDetailCubit(
-      reactionService: sl<ReactionService>(),
-    )
-  );
+  sl.registerFactory<ArticleDetailCubit>(() => ArticleDetailCubit(
+        reactionService: sl<ReactionService>(),
+      ));
 
   // Edit Article Cubit
-  sl.registerFactory<EditArticleCubit>(
-    () => EditArticleCubit(
-      updateArticleUseCase: sl<UpdateArticleUseCase>(),
-    )
-  );
-
-
+  sl.registerFactory<EditArticleCubit>(() => EditArticleCubit(
+        updateArticleUseCase: sl<UpdateArticleUseCase>(),
+      ));
 }

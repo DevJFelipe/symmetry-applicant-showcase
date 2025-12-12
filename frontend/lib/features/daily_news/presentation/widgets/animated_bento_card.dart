@@ -11,8 +11,10 @@ import 'package:news_app_clean_architecture/features/daily_news/domain/entities/
 enum BentoCardSize {
   /// Large card spanning full width - for featured articles
   large,
+
   /// Medium card - standard size
   medium,
+
   /// Small card - compact view
   small,
 }
@@ -88,7 +90,7 @@ class _AnimatedBentoCardState extends State<AnimatedBentoCard>
   @override
   Widget build(BuildContext context) {
     final height = _getHeight();
-    
+
     return AnimatedBuilder(
       animation: _scaleController,
       builder: (context, child) {
@@ -107,9 +109,7 @@ class _AnimatedBentoCardState extends State<AnimatedBentoCard>
           height: height,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(
-              widget.size == BentoCardSize.large 
-                  ? AppRadius.xl 
-                  : AppRadius.lg,
+              widget.size == BentoCardSize.large ? AppRadius.xl : AppRadius.lg,
             ),
             boxShadow: [
               BoxShadow(
@@ -127,28 +127,25 @@ class _AnimatedBentoCardState extends State<AnimatedBentoCard>
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(
-              widget.size == BentoCardSize.large 
-                  ? AppRadius.xl 
-                  : AppRadius.lg,
+              widget.size == BentoCardSize.large ? AppRadius.xl : AppRadius.lg,
             ),
             child: Stack(
               fit: StackFit.expand,
               children: [
                 // Background image with parallax
                 _buildImage(),
-                
+
                 // Gradient overlay
                 _buildGradientOverlay(),
-                
+
                 // Content
                 _buildContent(),
-                
+
                 // Reaction badges (top right)
-                if (widget.article.totalReactions > 0)
-                  _buildReactionBadge(),
-                
+                if (widget.article.totalReactions > 0) _buildReactionBadge(),
+
                 // Own article badge
-                if (widget.currentUserId != null && 
+                if (widget.currentUserId != null &&
                     widget.article.isOwnedBy(widget.currentUserId!))
                   _buildOwnBadge(),
               ],
@@ -157,9 +154,9 @@ class _AnimatedBentoCardState extends State<AnimatedBentoCard>
         ),
       ),
     )
-    .animate(delay: Duration(milliseconds: 50 * widget.index))
-    .fadeIn(duration: 400.ms, curve: Curves.easeOut)
-    .slideY(begin: 0.1, end: 0, duration: 400.ms, curve: Curves.easeOut);
+        .animate(delay: Duration(milliseconds: 50 * widget.index))
+        .fadeIn(duration: 400.ms, curve: Curves.easeOut)
+        .slideY(begin: 0.1, end: 0, duration: 400.ms, curve: Curves.easeOut);
   }
 
   double _getHeight() {
@@ -175,7 +172,7 @@ class _AnimatedBentoCardState extends State<AnimatedBentoCard>
 
   Widget _buildImage() {
     final imageUrl = widget.article.urlToImage;
-    
+
     if (imageUrl == null || imageUrl.isEmpty) {
       return Container(
         color: AppColors.surfaceLight,
@@ -235,7 +232,7 @@ class _AnimatedBentoCardState extends State<AnimatedBentoCard>
 
   Widget _buildContent() {
     final isLarge = widget.size == BentoCardSize.large;
-    
+
     return Padding(
       padding: EdgeInsets.all(isLarge ? AppSpacing.lg : AppSpacing.md),
       child: Column(
@@ -244,22 +241,22 @@ class _AnimatedBentoCardState extends State<AnimatedBentoCard>
         children: [
           // Category tag
           _buildCategoryTag(),
-          
+
           SizedBox(height: AppSpacing.sm),
-          
+
           // Title
           Text(
             widget.article.title ?? 'Untitled',
-            style: isLarge 
-                ? AppTypography.headlineMedium 
+            style: isLarge
+                ? AppTypography.headlineMedium
                 : AppTypography.titleMedium,
             maxLines: isLarge ? 3 : 2,
             overflow: TextOverflow.ellipsis,
           ),
-          
+
           if (widget.size != BentoCardSize.small) ...[
             SizedBox(height: AppSpacing.xs),
-            
+
             // Description (only for large and medium)
             Text(
               widget.article.description ?? '',
@@ -270,9 +267,9 @@ class _AnimatedBentoCardState extends State<AnimatedBentoCard>
               overflow: TextOverflow.ellipsis,
             ),
           ],
-          
+
           SizedBox(height: AppSpacing.sm),
-          
+
           // Meta row
           _buildMetaRow(),
         ],
@@ -283,26 +280,30 @@ class _AnimatedBentoCardState extends State<AnimatedBentoCard>
   Widget _buildCategoryTag() {
     // Use source as category for now
     final category = widget.article.source?.name ?? 'Article';
-    
+
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm,
-        vertical: AppSpacing.xxs,
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.xs,
       ),
       decoration: BoxDecoration(
-        color: AppColors.accent.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        border: Border.all(
-          color: AppColors.accent.withValues(alpha: 0.3),
-          width: 1,
-        ),
+        gradient: AppColors.primaryGradient,
+        borderRadius: BorderRadius.circular(AppRadius.full),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.4),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Text(
         category.toUpperCase(),
         style: AppTypography.labelSmall.copyWith(
-          color: AppColors.accent,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0.5,
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 1.0,
+          fontSize: 10,
         ),
       ),
     );
@@ -311,7 +312,7 @@ class _AnimatedBentoCardState extends State<AnimatedBentoCard>
   Widget _buildMetaRow() {
     final author = widget.article.author ?? 'Anonymous';
     final date = _formatDate(widget.article.publishedAt);
-    
+
     return Row(
       children: [
         // Author avatar
@@ -326,9 +327,9 @@ class _AnimatedBentoCardState extends State<AnimatedBentoCard>
             ),
           ),
         ),
-        
+
         SizedBox(width: AppSpacing.xs),
-        
+
         // Author name
         Expanded(
           child: Text(
@@ -340,7 +341,7 @@ class _AnimatedBentoCardState extends State<AnimatedBentoCard>
             overflow: TextOverflow.ellipsis,
           ),
         ),
-        
+
         // Date
         Text(
           date,
@@ -355,7 +356,7 @@ class _AnimatedBentoCardState extends State<AnimatedBentoCard>
   Widget _buildReactionBadge() {
     final reactions = widget.article.reactions;
     final total = widget.article.totalReactions;
-    
+
     // Get the most popular reaction
     String? topReaction;
     int topCount = 0;
@@ -365,7 +366,7 @@ class _AnimatedBentoCardState extends State<AnimatedBentoCard>
         topReaction = key;
       }
     });
-    
+
     return Positioned(
       top: AppSpacing.md,
       right: AppSpacing.md,
@@ -469,12 +470,12 @@ class _AnimatedBentoCardState extends State<AnimatedBentoCard>
 
   String _formatDate(String? dateStr) {
     if (dateStr == null) return '';
-    
+
     try {
       final date = DateTime.parse(dateStr);
       final now = DateTime.now();
       final diff = now.difference(date);
-      
+
       if (diff.inMinutes < 60) {
         return '${diff.inMinutes}m ago';
       } else if (diff.inHours < 24) {

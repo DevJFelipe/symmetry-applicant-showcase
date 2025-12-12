@@ -243,36 +243,6 @@ class FirestoreArticleService {
       return FirestoreArticleModel.fromFirestore(updatedDoc);
     });
   }
-
-  /// Searches articles by title and description.
-  ///
-  /// Uses case-insensitive search on local data since Firestore
-  /// doesn't support full-text search natively.
-  Future<List<FirestoreArticleModel>> searchArticles(String query) async {
-    // Fetch all articles first (for small datasets this is acceptable)
-    // For large datasets, consider using Algolia or ElasticSearch
-    final snapshot = await _firestore
-        .collection(_articlesCollection)
-        .orderBy('publishedAt', descending: true)
-        .get();
-
-    final queryLower = query.toLowerCase().trim();
-
-    if (queryLower.isEmpty) {
-      return snapshot.docs
-          .map((doc) => FirestoreArticleModel.fromFirestore(doc))
-          .toList();
-    }
-
-    return snapshot.docs
-        .map((doc) => FirestoreArticleModel.fromFirestore(doc))
-        .where((article) {
-      final titleMatch = article.title.toLowerCase().contains(queryLower);
-      final descMatch = article.description.toLowerCase().contains(queryLower);
-      final authorMatch = article.author.toLowerCase().contains(queryLower);
-      return titleMatch || descMatch || authorMatch;
-    }).toList();
-  }
 }
 
 /// Exception class for Firestore operations.
